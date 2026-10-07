@@ -1,0 +1,15 @@
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.badgeVeg {
+  border: 1.5px solid #16a34a;
+}
+
+.badgeNonVeg {
+  border: 1.5px solid #dc2626;
+}

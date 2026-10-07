@@ -1,0 +1,7 @@
+.editorialHero {
+  font-family: var(--font-heading, 'Playfair Display', serif);
+}
+
+.goldAccent {
+  color: var(--color-secondary, #C8A15B);
+}

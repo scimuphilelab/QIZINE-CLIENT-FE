@@ -1,0 +1,499 @@
+{
+  "_id": {
+    "$oid": "66f001a4b9c1d2e3f4a5b6c7"
+  },
+  "cafe_id": "cafe_7kJ2n9Xm4Pq1L8wZ",
+  "menu_id": "menu_main_v1",
+  "schema_version": 2,
+  "status": "ACTIVE",
+  "cafe_profile": {
+    "name": "Chai Break Café & Lounge",
+    "tagline": "Sip. Snack. Repeat.",
+    "logo_url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/brand/logo.webp",
+    "cover_url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/brand/cover.webp",
+    "phone": "+919876543210",
+    "address": "Plot 124, KIIT Square, Patia, Bhubaneswar, Odisha 751024",
+    "google_map_link": "https://maps.google.com/?q=Chai+Break+Patia",
+    "fssai_lic_no": "12024001000123",
+    "currency": "INR",
+    "currency_symbol": "₹",
+    "socials": {
+      "instagram": "https://instagram.com/chaibreak_patia",
+      "facebook": "",
+      "whatsapp": "+919876543210"
+    }
+  },
+  "design_config": {
+    "template_id": "tpl_editorial",
+    "colors": {
+      "primary": "#1F3D2B",
+      "secondary": "#C8A15B",
+      "accent": "#D9534F",
+      "background": "#FBF8F1",
+      "surface": "#FFFFFF",
+      "text": "#1A1A1A",
+      "text_muted": "#6B6B6B"
+    },
+    "fonts": {
+      "heading": "playfair_display",
+      "body": "inter"
+    },
+    "options": {}
+  },
+  "settings": {
+    "ordering_enabled": true,
+    "waiter_call_enabled": true,
+    "show_search_bar": true,
+    "show_diet_filter": true,
+    "tax_rate_percent": 5.0,
+    "service_charge_percent": 0.0,
+    "estimated_prep_time_minutes": 20
+  },
+  "sections": [
+    {
+      "id": "sec_food_kitchen",
+      "name": "Food & Kitchen",
+      "tagline": "Freshly cooked to order",
+      "sort_order": 1,
+      "is_active": true,
+      "categories": [
+        {
+          "id": "cat_biryani",
+          "name": "Dum Biryani Special",
+          "description": "Slow-cooked handi biryanis with aromatic long-grain basmati rice and royal Awadhi spices",
+          "image_url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/categories/cat_biryani.webp",
+          "sort_order": 1,
+          "is_active": true,
+          "schedule": [],
+          "items": [
+            {
+              "id": "itm_chk_dum_biryani",
+              "name": "Awadhi Chicken Dum Biryani",
+              "short_name": "Chicken Biryani",
+              "description": "Slow dum-cooked basmati layered with tender chicken pieces, caramelised onions, and royal spices. Served with creamy Burani raita.",
+              "diet_type": "NON_VEG",
+              "spice_level": 2,
+              "prep_time_minutes": 15,
+              "images": [
+                {
+                  "url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/items/biryani_chicken.webp",
+                  "alt": "Chicken Dum Biryani Handi"
+                }
+              ],
+              "pricing_type": "VARIANT",
+              "base_price_paise": 18900,
+              "variants": [
+                {
+                  "id": "var_chk_half",
+                  "name": "Half Plate (1 Pc Chicken)",
+                  "price_paise": 18900,
+                  "is_default": false,
+                  "in_stock": true
+                },
+                {
+                  "id": "var_chk_full",
+                  "name": "Full Plate (2 Pcs Chicken + 1 Boiled Egg)",
+                  "price_paise": 29900,
+                  "is_default": true,
+                  "in_stock": true
+                }
+              ],
+              "addon_groups": [
+                {
+                  "id": "grp_biryani_sides",
+                  "title": "Add-ons & Extras",
+                  "is_required": false,
+                  "min_selection": 0,
+                  "max_selection": 3,
+                  "options": [
+                    {
+                      "id": "opt_extra_raita",
+                      "name": "Extra Burani Raita",
+                      "price_paise": 2500,
+                      "in_stock": true
+                    },
+                    {
+                      "id": "opt_mirchi_salan",
+                      "name": "Mirchi Ka Salan (Portion)",
+                      "price_paise": 3500,
+                      "in_stock": true
+                    },
+                    {
+                      "id": "opt_boiled_egg",
+                      "name": "Extra Boiled Egg (1 Pc)",
+                      "price_paise": 2000,
+                      "in_stock": true
+                    }
+                  ]
+                }
+              ],
+              "tags": [
+                "BESTSELLER",
+                "CHEF_SPECIAL"
+              ],
+              "allergens": [
+                "DAIRY"
+              ],
+              "in_stock": true,
+              "is_visible": true,
+              "sort_order": 1
+            },
+            {
+              "id": "itm_paneer_dum_biryani",
+              "name": "Hyderabadi Paneer Subz Biryani",
+              "short_name": "Paneer Biryani",
+              "description": "Rich marinated paneer cubes and garden vegetables layered with saffron-infused rice and fried mint. Served with cucumber raita.",
+              "diet_type": "VEG",
+              "spice_level": 1,
+              "prep_time_minutes": 15,
+              "images": [
+                {
+                  "url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/items/biryani_paneer.webp",
+                  "alt": "Hyderabadi Paneer Subz Biryani"
+                }
+              ],
+              "pricing_type": "VARIANT",
+              "base_price_paise": 16900,
+              "variants": [
+                {
+                  "id": "var_pan_half",
+                  "name": "Half Plate",
+                  "price_paise": 16900,
+                  "is_default": false,
+                  "in_stock": true
+                },
+                {
+                  "id": "var_pan_full",
+                  "name": "Full Plate",
+                  "price_paise": 25900,
+                  "is_default": true,
+                  "in_stock": true
+                }
+              ],
+              "addon_groups": [
+                {
+                  "id": "grp_veg_biryani_sides",
+                  "title": "Add-ons & Extras",
+                  "is_required": false,
+                  "min_selection": 0,
+                  "max_selection": 2,
+                  "options": [
+                    {
+                      "id": "opt_cucumber_raita",
+                      "name": "Extra Cucumber Raita",
+                      "price_paise": 2500,
+                      "in_stock": true
+                    },
+                    {
+                      "id": "opt_roasted_papad",
+                      "name": "Roasted Masala Papad (2 Pcs)",
+                      "price_paise": 3000,
+                      "in_stock": true
+                    }
+                  ]
+                }
+              ],
+              "tags": [
+                "POPULAR",
+                "VEG_DELIGHT"
+              ],
+              "allergens": [
+                "DAIRY"
+              ],
+              "in_stock": true,
+              "is_visible": true,
+              "sort_order": 2
+            }
+          ]
+        },
+        {
+          "id": "cat_burgers_sandwiches",
+          "name": "Burgers & Sandwiches",
+          "description": "Toasted brioche buns, grilled patties, melted cheese, and house crisps",
+          "image_url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/categories/cat_burgers.webp",
+          "sort_order": 2,
+          "is_active": true,
+          "schedule": [],
+          "items": [
+            {
+              "id": "itm_crispy_chicken_burger",
+              "name": "The Crunchmaster Chicken Burger",
+              "short_name": "Crunchy Chicken Burger",
+              "description": "Buttermilk fried crispy chicken breast fillet, pickled gherkins, cheddar slice, and spicy sriracha mayo on a butter-toasted brioche bun.",
+              "diet_type": "NON_VEG",
+              "spice_level": 2,
+              "prep_time_minutes": 12,
+              "images": [
+                {
+                  "url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/items/burger_crunchy_chicken.webp",
+                  "alt": "Crunchmaster Chicken Burger"
+                }
+              ],
+              "pricing_type": "SINGLE",
+              "base_price_paise": 19900,
+              "variants": [],
+              "addon_groups": [
+                {
+                  "id": "grp_burger_addons",
+                  "title": "Customize Your Burger",
+                  "is_required": false,
+                  "min_selection": 0,
+                  "max_selection": 4,
+                  "options": [
+                    {
+                      "id": "opt_extra_cheese_slice",
+                      "name": "Double Yellow Cheddar Cheese",
+                      "price_paise": 3000,
+                      "in_stock": true
+                    },
+                    {
+                      "id": "opt_bacon_strip",
+                      "name": "Crispy Chicken Bacon (2 strips)",
+                      "price_paise": 5000,
+                      "in_stock": true
+                    },
+                    {
+                      "id": "opt_peri_peri_fries_side",
+                      "name": "Add Peri Peri French Fries",
+                      "price_paise": 6900,
+                      "in_stock": true
+                    },
+                    {
+                      "id": "opt_fried_egg",
+                      "name": "Sunny Side Up Fried Egg",
+                      "price_paise": 2500,
+                      "in_stock": true
+                    }
+                  ]
+                }
+              ],
+              "tags": [
+                "BESTSELLER"
+              ],
+              "allergens": [
+                "GLUTEN",
+                "DAIRY",
+                "EGG"
+              ],
+              "in_stock": true,
+              "is_visible": true,
+              "sort_order": 1
+            },
+            {
+              "id": "itm_truffle_paneer_burger",
+              "name": "Smoked Tandoori Paneer Burger",
+              "short_name": "Tandoori Paneer Burger",
+              "description": "Char-grilled tandoori cottage cheese steak, mint tzatziki, crisp lettuce, and onion rings inside a toasted sesame bun.",
+              "diet_type": "VEG",
+              "spice_level": 1,
+              "prep_time_minutes": 12,
+              "images": [],
+              "pricing_type": "SINGLE",
+              "base_price_paise": 16900,
+              "variants": [],
+              "addon_groups": [
+                {
+                  "id": "grp_veg_burger_addons",
+                  "title": "Add-ons",
+                  "is_required": false,
+                  "min_selection": 0,
+                  "max_selection": 2,
+                  "options": [
+                    {
+                      "id": "opt_extra_cheese_veg",
+                      "name": "Extra Cheddar Slice",
+                      "price_paise": 3000,
+                      "in_stock": true
+                    },
+                    {
+                      "id": "opt_salted_fries_side",
+                      "name": "Add Salted Fries",
+                      "price_paise": 5900,
+                      "in_stock": true
+                    }
+                  ]
+                }
+              ],
+              "tags": [
+                "NEW"
+              ],
+              "allergens": [
+                "GLUTEN",
+                "DAIRY"
+              ],
+              "in_stock": true,
+              "is_visible": true,
+              "sort_order": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sec_beverages_bar",
+      "name": "Beverages & Bar",
+      "tagline": "Chilled coolers, hand-shaken mocktails, and fresh teas",
+      "sort_order": 2,
+      "is_active": true,
+      "categories": [
+        {
+          "id": "cat_mocktails",
+          "name": "Craft Mocktails & Coolers",
+          "description": "House-crafted refreshers made with freshly squeezed fruit juices and herbs",
+          "image_url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/categories/cat_mocktails.webp",
+          "sort_order": 1,
+          "is_active": true,
+          "schedule": [
+            {
+              "days": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ],
+              "from": "10:00",
+              "to": "23:00"
+            }
+          ],
+          "items": [
+            {
+              "id": "itm_virgin_mint_mojito",
+              "name": "Cuban Virgin Mint Mojito",
+              "short_name": "Virgin Mojito",
+              "description": "Muddled garden mint leaves, fresh lime wedges, brown sugar syrup, and chilled sparkling soda over crushed ice.",
+              "diet_type": "VEG",
+              "spice_level": 0,
+              "prep_time_minutes": 5,
+              "images": [
+                {
+                  "url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/items/virgin_mojito.webp",
+                  "alt": "Fresh Mint Mojito"
+                }
+              ],
+              "pricing_type": "SINGLE",
+              "base_price_paise": 12900,
+              "variants": [],
+              "addon_groups": [],
+              "tags": [
+                "BESTSELLER",
+                "SUMMER_FAV"
+              ],
+              "allergens": [],
+              "in_stock": true,
+              "is_visible": true,
+              "sort_order": 1
+            },
+            {
+              "id": "itm_passion_fruit_ice_tea",
+              "name": "Passion Fruit & Peach Iced Tea",
+              "short_name": "Peach Passion Iced Tea",
+              "description": "Brewed Assam black tea shaken with tropical passion fruit puree, sweet peach syrup, and served over ice with lemon slice.",
+              "diet_type": "VEG",
+              "spice_level": 0,
+              "prep_time_minutes": 5,
+              "images": [],
+              "pricing_type": "SINGLE",
+              "base_price_paise": 13900,
+              "variants": [],
+              "addon_groups": [],
+              "tags": [
+                "REFRESHING"
+              ],
+              "allergens": [],
+              "in_stock": true,
+              "is_visible": true,
+              "sort_order": 2
+            }
+          ]
+        },
+        {
+          "id": "cat_hot_chai_coffee",
+          "name": "Artisanal Chai & Brews",
+          "description": "Slow-brewed hot teas and freshly roasted espresso coffees",
+          "image_url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/categories/cat_chai.webp",
+          "sort_order": 2,
+          "is_active": true,
+          "schedule": [],
+          "items": [
+            {
+              "id": "itm_kulhad_masala_chai",
+              "name": "Desi Kulhad Masala Chai",
+              "short_name": "Kulhad Chai",
+              "description": "Slow-simmered whole milk tea infused with crushed ginger, green cardamom, cloves, and cinnamon. Served in an authentic earthen clay kulhad.",
+              "diet_type": "VEG",
+              "spice_level": 0,
+              "prep_time_minutes": 8,
+              "images": [
+                {
+                  "url": "https://assets.qrorder.in/cafes/cafe_7kJ2n9Xm4Pq1L8wZ/items/kulhad_chai.webp",
+                  "alt": "Steaming Kulhad Masala Chai"
+                }
+              ],
+              "pricing_type": "VARIANT",
+              "base_price_paise": 5900,
+              "variants": [
+                {
+                  "id": "var_chai_single",
+                  "name": "Single Kulhad (150ml)",
+                  "price_paise": 5900,
+                  "is_default": true,
+                  "in_stock": true
+                },
+                {
+                  "id": "var_chai_pot",
+                  "name": "Sharing Kettle (Serves 4 - 600ml)",
+                  "price_paise": 19900,
+                  "is_default": false,
+                  "in_stock": true
+                }
+              ],
+              "addon_groups": [
+                {
+                  "id": "grp_chai_buns",
+                  "title": "Pair with Bakery",
+                  "is_required": false,
+                  "min_selection": 0,
+                  "max_selection": 2,
+                  "options": [
+                    {
+                      "id": "opt_bun_maska",
+                      "name": "Warm Toasted Bun Maska",
+                      "price_paise": 4900,
+                      "in_stock": true
+                    },
+                    {
+                      "id": "opt_osmania_biscuits",
+                      "name": "Osmania Butter Biscuits (4 pcs)",
+                      "price_paise": 3000,
+                      "in_stock": true
+                    }
+                  ]
+                }
+              ],
+              "tags": [
+                "MUST_TRY",
+                "HOUSE_SPECIALTY"
+              ],
+              "allergens": [
+                "DAIRY"
+              ],
+              "in_stock": true,
+              "is_visible": true,
+              "sort_order": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "published_at": {
+    "$date": "2026-09-21T02:50:00.000Z"
+  },
+  "updated_at": {
+    "$date": "2026-09-21T02:50:00.000Z"
+  },
+  "updated_by": "usr_9fK2mQ8xLp4Z"
+}

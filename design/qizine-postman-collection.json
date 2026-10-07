@@ -1,0 +1,2916 @@
+{
+  "collection": {
+    "info": {
+      "_postman_id": "1aa7510c-c2f5-49e5-8c48-75cdbe5e329e",
+      "name": "Qizine Apis",
+      "description": "Comprehensive API collection for Qizine QR-based ordering platform backend. Includes tenant isolation (x-vendor-id), multi-role RBAC authorization, dynamic query pagination, kitchen KDS, real-time SSE events, analytics, and digital menus.",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+      "type": "bearer",
+      "bearer": [
+        {
+          "key": "token",
+          "value": "{{token}}",
+          "type": "string"
+        }
+      ]
+    },
+    "variable": [
+      {
+        "key": "baseUrl",
+        "value": "http://localhost:5000/v1",
+        "type": "string"
+      },
+      {
+        "key": "token",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "refreshToken",
+        "value": "",
+        "type": "string"
+      },
+      {
+        "key": "vendorId",
+        "value": "c6f2a8b9-1d4e-4b2a-9f3c-8a1e5d7b2c9a",
+        "type": "string"
+      },
+      {
+        "key": "boothId",
+        "value": "e1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
+        "type": "string"
+      },
+      {
+        "key": "qrKey",
+        "value": "qr_demo_t14_bistro",
+        "type": "string"
+      },
+      {
+        "key": "orderId",
+        "value": "9f8e7d6c-5b4a-3f2e-1d0c-a9b8c7d6e5f4",
+        "type": "string"
+      },
+      {
+        "key": "userId",
+        "value": "3c2b1a0f-9e8d-7c6b-5a4f-3e2d1c0b9a8f",
+        "type": "string"
+      },
+      {
+        "key": "serviceRequestId",
+        "value": "7b6a5f4e-3d2c-1b0a-9f8e-7d6c5b4a3f2e",
+        "type": "string"
+      }
+    ],
+    "item": [
+      {
+        "name": "1. System & Health",
+        "description": "Platform health monitoring, service status, and server time.",
+        "item": [
+          {
+            "name": "Health Check",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/health",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "health"
+                ],
+                "query": []
+              },
+              "description": "Verifies backend health status, active timezone (Asia/Kolkata), and server timestamp."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "2. Authentication",
+        "description": "Google OAuth 2.0 authentication, JWT token refresh, and user identity profile.",
+        "item": [
+          {
+            "name": "Google Login",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"credential\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjEyMzQ1NiIsInR5cCI6IkpXVCJ9.dummy_google_credential_token\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/auth/google",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "auth",
+                  "google"
+                ],
+                "query": []
+              },
+              "description": "Exchanges a Google client OAuth credential token for backend JWT access and refresh tokens. Auto-creates staff or user accounts."
+            },
+            "response": [],
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "const response = pm.response.json();",
+                    "if (response.success && response.data && response.data.tokens) {",
+                    "    pm.collectionVariables.set(\"token\", response.data.tokens.access.token);",
+                    "    pm.collectionVariables.set(\"refreshToken\", response.data.tokens.refresh.token);",
+                    "    console.log(\"Access and Refresh tokens updated in collection variables\");",
+                    "}"
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "Refresh Token",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/auth/refresh-token",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "auth",
+                  "refresh-token"
+                ],
+                "query": []
+              },
+              "description": "Refreshes an expired JWT access token using a valid refresh token."
+            },
+            "response": [],
+            "event": [
+              {
+                "listen": "test",
+                "script": {
+                  "type": "text/javascript",
+                  "exec": [
+                    "const response = pm.response.json();",
+                    "if (response.success && response.data && response.data.access) {",
+                    "    pm.collectionVariables.set(\"token\", response.data.access.token);",
+                    "    console.log(\"Access token renewed in collection variables\");",
+                    "}"
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "Get Authenticated User Profile (Me)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/auth/me",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "auth",
+                  "me"
+                ],
+                "query": []
+              },
+              "description": "Fetches the current authenticated user profile, assigned vendor, and RBAC role."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "3. Vendor Management",
+        "description": "Vendor tenant operational settings, serving models, operating hours, and platform-wide vendor onboarding/management.",
+        "item": [
+          {
+            "name": "Fetch Tenant Vendor Profile Details",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": "Tenant scoping header"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/vendors/profile/fetch-details",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "profile",
+                  "fetch-details"
+                ],
+                "query": []
+              },
+              "description": "Fetches current vendor profile, business type, serving model, operating hours, and payment configurations."
+            },
+            "response": []
+          },
+          {
+            "name": "Create / Setup Vendor Profile",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"business_type\": \"CAFE\",\n  \"serving_model\": \"DINE_IN\",\n  \"accept_order_type\": \"PREPAID\",\n  \"order_confirmation_model\": \"MANUAL\",\n  \"phone\": \"+919876543210\",\n  \"email\": \"contact@himalayanbistro.com\",\n  \"website_url\": \"https://himalayanbistro.com\",\n  \"google_map_link\": \"https://maps.google.com/?q=Himalayan+Bistro\",\n  \"address\": \"12 Mall Road, Near Clock Tower\",\n  \"city\": \"Dehradun\",\n  \"state\": \"Uttarakhand\",\n  \"pincode\": \"248001\",\n  \"opening_time\": \"09:00:00\",\n  \"closing_time\": \"23:00:00\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/vendors/profile/create",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "profile",
+                  "create"
+                ],
+                "query": []
+              },
+              "description": "Sets up initial profile details for a vendor tenant."
+            },
+            "response": []
+          },
+          {
+            "name": "Update Vendor Profile Details",
+            "request": {
+              "method": "PATCH",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"phone\": \"+919876543299\",\n  \"opening_time\": \"08:30:00\",\n  \"closing_time\": \"23:30:00\",\n  \"accept_order_type\": \"POSTPAID\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/vendors/profile/update-details",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "profile",
+                  "update-details"
+                ],
+                "query": []
+              },
+              "description": "Updates tenant operational parameters such as timings, contact details, or order models."
+            },
+            "response": []
+          },
+          {
+            "name": "Delete / Deactivate Vendor Profile",
+            "request": {
+              "method": "DELETE",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/vendors/profile/delete",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "profile",
+                  "delete"
+                ],
+                "query": []
+              },
+              "description": "Soft-deletes / archives the vendor profile."
+            },
+            "response": []
+          },
+          {
+            "name": "Fetch Platform Overview Metrics",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/vendors/metrics",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "metrics"
+                ],
+                "query": []
+              },
+              "description": "Platform admin overview showing total vendors, active booths, total orders, and revenue."
+            },
+            "response": []
+          },
+          {
+            "name": "Search & Filter Platform Vendors (Dynamic Query)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/vendors/search-query?page=1&limit=12&search=bistro&sortBy=created_at&sortOrder=DESC&status=ACTIVE&business_type=CAFE",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "search-query"
+                ],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1",
+                    "description": "Page number",
+                    "disabled": false
+                  },
+                  {
+                    "key": "limit",
+                    "value": "12",
+                    "description": "Page size limit",
+                    "disabled": false
+                  },
+                  {
+                    "key": "search",
+                    "value": "bistro",
+                    "description": "Full-text search on name, slug, city, email",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortBy",
+                    "value": "created_at",
+                    "description": "Sort column",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortOrder",
+                    "value": "DESC",
+                    "description": "Sort direction ASC/DESC",
+                    "disabled": false
+                  },
+                  {
+                    "key": "status",
+                    "value": "ACTIVE",
+                    "description": "Filter by vendor status (ONBOARDED, ACTIVE, SUSPENDED, ARCHIVED)",
+                    "disabled": false
+                  },
+                  {
+                    "key": "business_type",
+                    "value": "CAFE",
+                    "description": "Filter by business type",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Dynamic parameterized query across all platform vendors with pagination and filtering."
+            },
+            "response": []
+          },
+          {
+            "name": "Onboard New Vendor Tenant",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"name\": \"The Himalayan Bistro\",\n  \"slug\": \"the-himalayan-bistro\",\n  \"owner_name\": \"Aman Negi\",\n  \"owner_email\": \"aman@himalayanbistro.com\",\n  \"business_type\": \"CAFE\",\n  \"serving_model\": \"DINE_IN\",\n  \"accept_order_type\": \"PREPAID\",\n  \"order_confirmation_model\": \"MANUAL\",\n  \"phone\": \"+919876543210\",\n  \"email\": \"contact@himalayanbistro.com\",\n  \"address\": \"12 Mall Road\",\n  \"city\": \"Dehradun\",\n  \"state\": \"Uttarakhand\",\n  \"pincode\": \"248001\",\n  \"opening_time\": \"09:00:00\",\n  \"closing_time\": \"23:00:00\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/vendors/create",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "create"
+                ],
+                "query": []
+              },
+              "description": "Platform Admin action to onboard a new vendor tenant and establish owner profile."
+            },
+            "response": []
+          },
+          {
+            "name": "Fetch Vendor by ID",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/vendors/fetch-details/%7B%7BvendorId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "fetch-details",
+                  "%7B%7BvendorId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Retrieves complete vendor record by its primary ID."
+            },
+            "response": []
+          },
+          {
+            "name": "Update Vendor Status",
+            "request": {
+              "method": "PATCH",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"ACTIVE\",\n  \"reason\": \"Documents verified and kitchen hygiene approved\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/vendors/update-status/%7B%7BvendorId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "update-status",
+                  "%7B%7BvendorId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Platform Admin action to activate, suspend, or archive a vendor."
+            },
+            "response": []
+          },
+          {
+            "name": "Update Platform Vendor Details",
+            "request": {
+              "method": "PATCH",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"serving_model\": \"TAKEAWAY\",\n  \"accept_order_type\": \"PREPAID\",\n  \"phone\": \"+919876543299\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/vendors/update-details/%7B%7BvendorId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "vendors",
+                  "update-details",
+                  "%7B%7BvendorId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Platform Admin action to update specific vendor configuration by ID."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "4. QR Booths & Scan",
+        "description": "Physical dining tables, pickup counters, delivery spots, and customer QR scan entry points.",
+        "item": [
+          {
+            "name": "Scan Booth QR Code (Public Customer Flow)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/qr-booths/scan/%7B%7BqrKey%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "qr-booths",
+                  "scan",
+                  "%7B%7BqrKey%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Public customer entrypoint. Validates operating hours, retrieves booth details, and returns vendor profile and active digital menu."
+            },
+            "response": []
+          },
+          {
+            "name": "Search & Filter QR Booths (Dynamic Query)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/qr-booths/search-query?page=1&limit=12&search=T-14&sortBy=label&sortOrder=ASC&is_active=true&zone=Rooftop%20Garden",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "qr-booths",
+                  "search-query"
+                ],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1",
+                    "description": "Page number",
+                    "disabled": false
+                  },
+                  {
+                    "key": "limit",
+                    "value": "12",
+                    "description": "Page size limit",
+                    "disabled": false
+                  },
+                  {
+                    "key": "search",
+                    "value": "T-14",
+                    "description": "Full-text search on label, zone, qr_code_key",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortBy",
+                    "value": "label",
+                    "description": "Sort column",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortOrder",
+                    "value": "ASC",
+                    "description": "Sort direction",
+                    "disabled": false
+                  },
+                  {
+                    "key": "is_active",
+                    "value": "true",
+                    "description": "Filter active booths",
+                    "disabled": false
+                  },
+                  {
+                    "key": "zone",
+                    "value": "Rooftop Garden",
+                    "description": "Filter by dining zone",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Dynamic query engine search for vendor booths with pagination."
+            },
+            "response": []
+          },
+          {
+            "name": "Create QR Booth",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"label\": \"T-14\",\n  \"seats\": 4,\n  \"zone\": \"Rooftop Garden\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/qr-booths/create",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "qr-booths",
+                  "create"
+                ],
+                "query": []
+              },
+              "description": "Creates a new dining booth/table and automatically generates a cryptographically unique QR code key."
+            },
+            "response": []
+          },
+          {
+            "name": "Fetch QR Booth by ID",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/qr-booths/fetch-details/%7B%7BboothId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "qr-booths",
+                  "fetch-details",
+                  "%7B%7BboothId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Fetches details of a specific booth including its QR code key."
+            },
+            "response": []
+          },
+          {
+            "name": "Update QR Booth Details",
+            "request": {
+              "method": "PATCH",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"label\": \"T-14 (Premium)\",\n  \"seats\": 6,\n  \"zone\": \"VIP Terrace\",\n  \"is_active\": true\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/qr-booths/update-details/%7B%7BboothId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "qr-booths",
+                  "update-details",
+                  "%7B%7BboothId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Updates booth label, seating capacity, zone, or active status."
+            },
+            "response": []
+          },
+          {
+            "name": "Delete QR Booth",
+            "request": {
+              "method": "DELETE",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/qr-booths/delete/%7B%7BboothId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "qr-booths",
+                  "delete",
+                  "%7B%7BboothId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Deletes a booth from the vendor floor layout."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "5. Staff & Users",
+        "description": "Vendor staff management (Admins, Managers, Chefs, Waiters) and user state management.",
+        "item": [
+          {
+            "name": "Search & Filter Staff Members (Dynamic Query)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/users/search-query?page=1&limit=12&search=rahul&sortBy=created_at&sortOrder=DESC&role=WAITER&status=ACTIVE",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "users",
+                  "search-query"
+                ],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1",
+                    "description": "Page number",
+                    "disabled": false
+                  },
+                  {
+                    "key": "limit",
+                    "value": "12",
+                    "description": "Page size limit",
+                    "disabled": false
+                  },
+                  {
+                    "key": "search",
+                    "value": "rahul",
+                    "description": "Full-text search on full_name, email, phone",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortBy",
+                    "value": "created_at",
+                    "description": "Sort column",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortOrder",
+                    "value": "DESC",
+                    "description": "Sort direction",
+                    "disabled": false
+                  },
+                  {
+                    "key": "role",
+                    "value": "WAITER",
+                    "description": "Filter by role (ADMIN, MANAGER, CHEF, WAITER)",
+                    "disabled": false
+                  },
+                  {
+                    "key": "status",
+                    "value": "ACTIVE",
+                    "description": "Filter by status (ACTIVE, SUSPENDED, DEACTIVATED)",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Lists vendor staff members with filtering, search, and pagination."
+            },
+            "response": []
+          },
+          {
+            "name": "Create Staff Member",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"full_name\": \"Rahul Verma\",\n  \"email\": \"rahul.verma@himalayanbistro.com\",\n  \"role\": \"WAITER\",\n  \"phone\": \"+919876500001\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/users/create",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "users",
+                  "create"
+                ],
+                "query": []
+              },
+              "description": "Creates a staff member under the vendor tenant with an assigned role."
+            },
+            "response": []
+          },
+          {
+            "name": "Fetch User by ID",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/users/fetch-details/%7B%7BuserId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "users",
+                  "fetch-details",
+                  "%7B%7BuserId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Retrieves user details by ID within tenant scope."
+            },
+            "response": []
+          },
+          {
+            "name": "Update User Status",
+            "request": {
+              "method": "PATCH",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"SUSPENDED\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/users/update-status/%7B%7BuserId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "users",
+                  "update-status",
+                  "%7B%7BuserId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Updates user status (ACTIVE, SUSPENDED, DEACTIVATED)."
+            },
+            "response": []
+          },
+          {
+            "name": "Delete / Deactivate User",
+            "request": {
+              "method": "DELETE",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/users/delete/%7B%7BuserId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "users",
+                  "delete",
+                  "%7B%7BuserId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Soft deletes / deactivates staff user account."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "6. Digital Menu (MongoDB)",
+        "description": "Document-oriented digital menu storage with hierarchical sections, categories, items, variants, and addons.",
+        "item": [
+          {
+            "name": "Fetch Digital Menu",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/menu/fetch-details",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "menu",
+                  "fetch-details"
+                ],
+                "query": []
+              },
+              "description": "Retrieves the complete active digital menu document from MongoDB for the vendor."
+            },
+            "response": []
+          },
+          {
+            "name": "Save / Upsert Digital Menu",
+            "request": {
+              "method": "PUT",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"ACTIVE\",\n  \"schema_version\": 2,\n  \"sections\": [\n    {\n      \"id\": \"sec_beverages\",\n      \"name\": \"Beverages\",\n      \"description\": \"Craft coffees, teas, and mocktails\",\n      \"sort_order\": 1,\n      \"is_active\": true,\n      \"categories\": [\n        {\n          \"id\": \"cat_coffee\",\n          \"name\": \"Specialty Coffee\",\n          \"sort_order\": 1,\n          \"is_active\": true,\n          \"items\": [\n            {\n              \"id\": \"itm_cold_coffee\",\n              \"name\": \"Classic Cold Brew\",\n              \"description\": \"Steeped for 18 hours, rich and smooth\",\n              \"pricing_type\": \"BASE\",\n              \"base_price_paise\": 18000,\n              \"dietary_flag\": \"VEG\",\n              \"in_stock\": true,\n              \"is_visible\": true,\n              \"sort_order\": 1,\n              \"addon_groups\": [\n                {\n                  \"id\": \"grp_milk\",\n                  \"name\": \"Milk Preference\",\n                  \"min_selection\": 0,\n                  \"max_selection\": 1,\n                  \"options\": [\n                    {\n                      \"id\": \"opt_oat\",\n                      \"name\": \"Oat Milk\",\n                      \"price_paise\": 4000\n                    },\n                    {\n                      \"id\": \"opt_almond\",\n                      \"name\": \"Almond Milk\",\n                      \"price_paise\": 4000\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"id\": \"sec_food\",\n      \"name\": \"Food & Mains\",\n      \"sort_order\": 2,\n      \"is_active\": true,\n      \"categories\": [\n        {\n          \"id\": \"cat_pizza\",\n          \"name\": \"Wood-fired Pizzas\",\n          \"sort_order\": 1,\n          \"is_active\": true,\n          \"items\": [\n            {\n              \"id\": \"itm_pz_margherita\",\n              \"name\": \"Artisan Margherita Pizza\",\n              \"description\": \"San Marzano tomatoes, fresh mozzarella, basil\",\n              \"pricing_type\": \"VARIANT\",\n              \"base_price_paise\": 32000,\n              \"dietary_flag\": \"VEG\",\n              \"in_stock\": true,\n              \"is_visible\": true,\n              \"sort_order\": 1,\n              \"variants\": [\n                {\n                  \"id\": \"var_reg\",\n                  \"name\": \"Regular (8\\\")\",\n                  \"price_paise\": 32000,\n                  \"in_stock\": true\n                },\n                {\n                  \"id\": \"var_large\",\n                  \"name\": \"Large (12\\\")\",\n                  \"price_paise\": 48000,\n                  \"in_stock\": true\n                }\n              ],\n              \"addon_groups\": [\n                {\n                  \"id\": \"grp_toppings\",\n                  \"name\": \"Extra Toppings\",\n                  \"min_selection\": 0,\n                  \"max_selection\": 3,\n                  \"options\": [\n                    {\n                      \"id\": \"add_extra_cheese\",\n                      \"name\": \"Extra Mozzarella\",\n                      \"price_paise\": 6000\n                    },\n                    {\n                      \"id\": \"add_jalapenos\",\n                      \"name\": \"Jalapenos\",\n                      \"price_paise\": 3000\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ],\n  \"settings\": {\n    \"currency\": \"INR\",\n    \"currency_symbol\": \"₹\",\n    \"tax_rate_percent\": 5,\n    \"service_charge_percent\": 0\n  }\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/menu/update-details",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "menu",
+                  "update-details"
+                ],
+                "query": []
+              },
+              "description": "Saves or updates the digital menu in MongoDB with deep nested sections, items, and tax rates."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "7. Orders & KDS",
+        "description": "Order lifecycle state machine (INITIATED -> ACCEPTED -> PREPARING -> READY -> SERVED), Kitchen Display System (KDS), cashier POS, and payments.",
+        "item": [
+          {
+            "name": "Search & Filter Orders (Dynamic Query)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/orders/search-query?page=1&limit=12&search=T-14&sortBy=placed_at&sortOrder=DESC&status=ACCEPTED&payment_status=PAID",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "search-query"
+                ],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1",
+                    "description": "Page number",
+                    "disabled": false
+                  },
+                  {
+                    "key": "limit",
+                    "value": "12",
+                    "description": "Page size limit",
+                    "disabled": false
+                  },
+                  {
+                    "key": "search",
+                    "value": "T-14",
+                    "description": "Search customer name, phone, booth label, ref_token",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortBy",
+                    "value": "placed_at",
+                    "description": "Sort column",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortOrder",
+                    "value": "DESC",
+                    "description": "Sort direction",
+                    "disabled": false
+                  },
+                  {
+                    "key": "status",
+                    "value": "ACCEPTED",
+                    "description": "Filter by status (INITIATED, ACCEPTED, PREPARING, READY, SERVED, CANCELLED, REJECTED)",
+                    "disabled": false
+                  },
+                  {
+                    "key": "payment_status",
+                    "value": "PAID",
+                    "description": "Filter by payment status (PENDING, PAID, REFUNDED)",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Dynamic parameterized query across all tenant orders."
+            },
+            "response": []
+          },
+          {
+            "name": "Fetch Active Orders (Kitchen KDS Display)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/orders/active",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "active"
+                ],
+                "query": []
+              },
+              "description": "Retrieves active orders destined for chef kitchen display (ACCEPTED, PREPARING, READY)."
+            },
+            "response": []
+          },
+          {
+            "name": "Fetch Pending Approval Orders (Manager Live Dashboard)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/orders/pending-approval",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "pending-approval"
+                ],
+                "query": []
+              },
+              "description": "Lists prepaid orders in INITIATED status awaiting manual manager verification or soundbox confirmation."
+            },
+            "response": []
+          },
+          {
+            "name": "Fetch Order Details & Live Tracking",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/orders/fetch-details/%7B%7BorderId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "fetch-details",
+                  "%7B%7BorderId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Live order tracking view for customers or staff members."
+            },
+            "response": []
+          },
+          {
+            "name": "Place Order (Customer via QR)",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"qr_key\": \"{{qrKey}}\",\n  \"customer_name\": \"Aman Gupta\",\n  \"customer_phone\": \"+919876543210\",\n  \"customer_note\": \"Extra spicy, no onions please\",\n  \"items\": [\n    {\n      \"item_id\": \"itm_pz_margherita\",\n      \"variant_id\": \"var_reg\",\n      \"qty\": 2,\n      \"addon_ids\": [\n        \"add_extra_cheese\"\n      ]\n    },\n    {\n      \"item_id\": \"itm_cold_coffee\",\n      \"qty\": 1\n    }\n  ]\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/orders/create",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "create"
+                ],
+                "query": []
+              },
+              "description": "Public customer order placement from QR code scan. Performs server-side price recalculation and generates 6-digit ref_token."
+            },
+            "response": []
+          },
+          {
+            "name": "Place Order (Staff Manual POS)",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"qr_booth_id\": \"{{boothId}}\",\n  \"booth_label\": \"T-14\",\n  \"customer_name\": \"Priya Sharma\",\n  \"customer_phone\": \"+919812345678\",\n  \"customer_note\": \"Counter takeaway\",\n  \"item_details\": [\n    {\n      \"item_id\": \"itm_cold_coffee\",\n      \"name\": \"Classic Cold Brew\",\n      \"qty\": 2,\n      \"price_paise\": 18000,\n      \"item_total_paise\": 36000\n    }\n  ],\n  \"subtotal_paise\": 36000,\n  \"discount_paise\": 0,\n  \"tax_paise\": 1800,\n  \"total_paise\": 37800\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/orders/create",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "create"
+                ],
+                "query": []
+              },
+              "description": "Manual order created by cashier/manager from counter POS dashboard."
+            },
+            "response": []
+          },
+          {
+            "name": "Customer Self-Cancellation",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"ref_token\": \"582914\",\n  \"reason\": \"Customer cancelled prior to payment confirmation\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/orders/cancel/%7B%7BorderId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "cancel",
+                  "%7B%7BorderId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Allows customer to self-cancel an order while in INITIATED state using their ref_token."
+            },
+            "response": []
+          },
+          {
+            "name": "Order Handoff & Token Verification (READY -> SERVED)",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"ref_token\": \"582914\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/orders/serve/%7B%7BorderId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "serve",
+                  "%7B%7BorderId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Verifies customer 6-digit pickup token and marks order as SERVED."
+            },
+            "response": []
+          },
+          {
+            "name": "Payment Confirmation (Prepaid Orders)",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"payment_method\": \"UPI\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/orders/confirm-payment/%7B%7BorderId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "confirm-payment",
+                  "%7B%7BorderId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Manager manual action confirming receipt of customer payment, promoting order to ACCEPTED and routing to KDS."
+            },
+            "response": []
+          },
+          {
+            "name": "Automated Payment Callback / Webhook",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"order_id\": \"{{orderId}}\",\n  \"vendor_id\": \"{{vendorId}}\",\n  \"payment_status\": \"SUCCESS\",\n  \"payment_method\": \"UPI\",\n  \"transaction_id\": \"txn_razorpay_9876543210\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/orders/payment-callback",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "payment-callback"
+                ],
+                "query": []
+              },
+              "description": "Webhook receiver for payment gateways (Razorpay, Cashfree) and UPI soundbox notifications."
+            },
+            "response": []
+          },
+          {
+            "name": "Update Payment Settlement",
+            "request": {
+              "method": "PATCH",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"payment_status\": \"PAID\",\n  \"payment_method\": \"CASH\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/orders/update-payment/%7B%7BorderId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "update-payment",
+                  "%7B%7BorderId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Updates payment status and settlement method (CASH, CARD, UPI, ONLINE)."
+            },
+            "response": []
+          },
+          {
+            "name": "Update Order Status (State Machine)",
+            "request": {
+              "method": "PATCH",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"PREPARING\",\n  \"reason\": \"Station 2 preparing beverage order\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/orders/update-status/%7B%7BorderId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "orders",
+                  "update-status",
+                  "%7B%7BorderId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Advances order through the state machine: INITIATED -> ACCEPTED -> PREPARING -> READY -> SERVED, or CANCELLED / REJECTED."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "8. Service Requests (Floor Calls)",
+        "description": "Customer table assistance calls (Water, Tissue, Waiter Call, Bill Request) and staff resolution.",
+        "item": [
+          {
+            "name": "Search & Filter Service Requests (Dynamic Query)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/service-requests/search-query?page=1&limit=12&sortBy=created_at&sortOrder=DESC&status=PENDING",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "service-requests",
+                  "search-query"
+                ],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1",
+                    "description": "Page number",
+                    "disabled": false
+                  },
+                  {
+                    "key": "limit",
+                    "value": "12",
+                    "description": "Page size limit",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortBy",
+                    "value": "created_at",
+                    "description": "Sort column",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortOrder",
+                    "value": "DESC",
+                    "description": "Sort direction",
+                    "disabled": false
+                  },
+                  {
+                    "key": "status",
+                    "value": "PENDING",
+                    "description": "Filter status (PENDING, RESOLVED)",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Dynamic query engine to list active or resolved floor service calls."
+            },
+            "response": []
+          },
+          {
+            "name": "Create Service Request (Call Waiter)",
+            "request": {
+              "method": "POST",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"qr_key\": \"{{qrKey}}\",\n  \"request_type\": \"WATER\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/service-requests/create",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "service-requests",
+                  "create"
+                ],
+                "query": []
+              },
+              "description": "Public customer request for assistance (WATER, TISSUE, CLEANING, BILL, WAITER_CALL)."
+            },
+            "response": []
+          },
+          {
+            "name": "Resolve Service Request",
+            "request": {
+              "method": "PATCH",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/service-requests/resolve/%7B%7BserviceRequestId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "service-requests",
+                  "resolve",
+                  "%7B%7BserviceRequestId%7D%7D"
+                ],
+                "query": []
+              },
+              "description": "Staff member resolves and acknowledges the customer call."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "9. Subscriptions",
+        "description": "Vendor SaaS plan subscriptions, billing periods, and feature tiers.",
+        "item": [
+          {
+            "name": "Search & Filter Subscriptions (Dynamic Query)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/subscriptions/search-query?page=1&limit=12&search=bistro&sortBy=created_at&sortOrder=DESC&status=ACTIVE",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "subscriptions",
+                  "search-query"
+                ],
+                "query": [
+                  {
+                    "key": "page",
+                    "value": "1",
+                    "description": "Page number",
+                    "disabled": false
+                  },
+                  {
+                    "key": "limit",
+                    "value": "12",
+                    "description": "Page size limit",
+                    "disabled": false
+                  },
+                  {
+                    "key": "search",
+                    "value": "bistro",
+                    "description": "Search vendor name or payment reference",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortBy",
+                    "value": "created_at",
+                    "description": "Sort column",
+                    "disabled": false
+                  },
+                  {
+                    "key": "sortOrder",
+                    "value": "DESC",
+                    "description": "Sort direction",
+                    "disabled": false
+                  },
+                  {
+                    "key": "status",
+                    "value": "ACTIVE",
+                    "description": "Filter subscription status (ACTIVE, TRIALING, PAST_DUE, CANCELLED)",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Search and inspect vendor subscription records, billing dates, and plan details."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "10. Analytics & Reporting",
+        "description": "Comprehensive business intelligence, sales trends, item velocity, peak hours, and daily reports.",
+        "item": [
+          {
+            "name": "High-Level KPI Overview",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/analytics/overview?timeframe=today",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "analytics",
+                  "overview"
+                ],
+                "query": [
+                  {
+                    "key": "timeframe",
+                    "value": "today",
+                    "description": "today, yesterday, this_week, this_month, all_time, custom",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Returns gross revenue, net sales, order volume, average order value (AOV), and pipeline summary."
+            },
+            "response": []
+          },
+          {
+            "name": "Sales & Revenue Trends",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/analytics/sales-trend?group_by=day&timeframe=this_month",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "analytics",
+                  "sales-trend"
+                ],
+                "query": [
+                  {
+                    "key": "group_by",
+                    "value": "day",
+                    "description": "hour, day, week, month",
+                    "disabled": false
+                  },
+                  {
+                    "key": "timeframe",
+                    "value": "this_month",
+                    "description": "Timeframe filter",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Time series revenue and order count aggregated by specified interval."
+            },
+            "response": []
+          },
+          {
+            "name": "Top Most Ordered Menu Items",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/analytics/top-items?limit=5&timeframe=this_month",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "analytics",
+                  "top-items"
+                ],
+                "query": [
+                  {
+                    "key": "limit",
+                    "value": "5",
+                    "description": "Number of top items to return",
+                    "disabled": false
+                  },
+                  {
+                    "key": "timeframe",
+                    "value": "this_month",
+                    "description": "Timeframe filter",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Item velocity leaderboard ranking top dishes by quantity sold and revenue."
+            },
+            "response": []
+          },
+          {
+            "name": "Order Status Distribution",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/analytics/order-status?timeframe=today",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "analytics",
+                  "order-status"
+                ],
+                "query": [
+                  {
+                    "key": "timeframe",
+                    "value": "today",
+                    "description": "Timeframe filter",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Breakdown of orders by current state (ACCEPTED, PREPARING, READY, SERVED, CANCELLED)."
+            },
+            "response": []
+          },
+          {
+            "name": "Payment Methods & Settlement Analytics",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/analytics/payment-methods?timeframe=this_month",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "analytics",
+                  "payment-methods"
+                ],
+                "query": [
+                  {
+                    "key": "timeframe",
+                    "value": "this_month",
+                    "description": "Timeframe filter",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Volume and amount breakdown across payment methods (UPI, CASH, CARD, ONLINE)."
+            },
+            "response": []
+          },
+          {
+            "name": "Booth & Table Turnover Performance",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/analytics/booth-performance?limit=10&timeframe=this_week",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "analytics",
+                  "booth-performance"
+                ],
+                "query": [
+                  {
+                    "key": "limit",
+                    "value": "10",
+                    "description": "Top booths count",
+                    "disabled": false
+                  },
+                  {
+                    "key": "timeframe",
+                    "value": "this_week",
+                    "description": "Timeframe filter",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Ranking of tables and booths by order frequency, revenue generation, and utilization."
+            },
+            "response": []
+          },
+          {
+            "name": "Staff & User Performance",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/analytics/staff-performance?timeframe=this_month",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "analytics",
+                  "staff-performance"
+                ],
+                "query": [
+                  {
+                    "key": "timeframe",
+                    "value": "this_month",
+                    "description": "Timeframe filter",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "Staff metrics tracking manual orders placed, requests resolved, and average fulfillment time."
+            },
+            "response": []
+          },
+          {
+            "name": "Hourly Traffic Heatmap & Peak Hours",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/analytics/peak-hours?timeframe=this_month",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "analytics",
+                  "peak-hours"
+                ],
+                "query": [
+                  {
+                    "key": "timeframe",
+                    "value": "this_month",
+                    "description": "Timeframe filter",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "24-hour heat map showing order density and peak traffic hours."
+            },
+            "response": []
+          },
+          {
+            "name": "Daily Comprehensive Summary Report",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "bearer",
+                "bearer": [
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                },
+                {
+                  "key": "x-vendor-id",
+                  "value": "{{vendorId}}",
+                  "type": "text",
+                  "description": ""
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/analytics/daily-report?date=2026-10-05",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "analytics",
+                  "daily-report"
+                ],
+                "query": [
+                  {
+                    "key": "date",
+                    "value": "2026-10-05",
+                    "description": "Report date YYYY-MM-DD",
+                    "disabled": false
+                  }
+                ]
+              },
+              "description": "End-of-day reconciliation report with gross revenue, tax collected, and breakdown by payment method."
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "11. Real-Time Events (SSE)",
+        "description": "Server-Sent Events streaming real-time notifications to kitchen, waiter, manager dashboards, and live order tracking.",
+        "item": [
+          {
+            "name": "Real-Time SSE Stream (Staff / Customer)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/events/stream?vendor_id=%7B%7BvendorId%7D%7D&token=%7B%7Btoken%7D%7D&order_id=%7B%7BorderId%7D%7D",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "events",
+                  "stream"
+                ],
+                "query": [
+                  {
+                    "key": "vendor_id",
+                    "value": "{{vendorId}}",
+                    "description": "Target vendor ID",
+                    "disabled": false
+                  },
+                  {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "description": "JWT authentication token",
+                    "disabled": false
+                  },
+                  {
+                    "key": "order_id",
+                    "value": "{{orderId}}",
+                    "description": "Optional: Customer live order ID tracking",
+                    "disabled": true
+                  }
+                ]
+              },
+              "description": "Connects to SSE event stream. Streams ORDER_CREATED, ORDER_STATUS_CHANGED, SERVICE_REQUEST_CREATED, and PAYMENT_CONFIRMED frames."
+            },
+            "response": []
+          },
+          {
+            "name": "Active SSE Connections Stats (Diagnostics)",
+            "request": {
+              "method": "GET",
+              "auth": {
+                "type": "noauth"
+              },
+              "header": [
+                {
+                  "key": "Accept",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{baseUrl}}/events/stats",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "events",
+                  "stats"
+                ],
+                "query": []
+              },
+              "description": "Returns count of currently connected SSE clients and subscribers."
+            },
+            "response": []
+          }
+        ]
+      }
+    ]
+  }
+}
