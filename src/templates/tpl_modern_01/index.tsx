@@ -186,6 +186,7 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
       {/* 1. Home / Menu Screen */}
       {currentScreen === 'home' && (
         <HomeScreen
+          menu={menu}
           categories={categories}
           popularItems={popularItems}
           booth={booth}

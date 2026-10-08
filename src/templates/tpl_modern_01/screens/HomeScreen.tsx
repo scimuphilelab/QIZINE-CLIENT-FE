@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, ShoppingBag, MapPin, ChevronDown, ArrowRight, Plus } from 'lucide-react';
-import type { MenuItem, MenuCategory } from '../../../core/types/menu.types';
+import type { MenuItem, MenuCategory, MongoMenuDocument } from '../../../core/types/menu.types';
 import type { QRBoothContext } from '../../../core/types/order.types';
 import { useCart } from '../../../core/hooks/useCart';
+import { getFoodImageFallback } from '../../../core/utils/imageFallback';
 
 export interface HomeScreenProps {
+  menu?: MongoMenuDocument | null;
   categories: MenuCategory[];
   popularItems: MenuItem[];
   booth?: QRBoothContext;
@@ -16,14 +18,21 @@ export interface HomeScreenProps {
   cartCount: number;
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  cat_burgers: '🍔',
-  cat_appetizers: '🍟',
-  cat_milkshakes: '🥤',
-  cat_drinks: '🍹',
+const getCategoryIcon = (catName: string, catId: string): string => {
+  const text = `${catName} ${catId}`.toLowerCase();
+  if (text.includes('burger')) return '🍔';
+  if (text.includes('fry') || text.includes('fries') || text.includes('appetizer') || text.includes('snack') || text.includes('starter')) return '🍟';
+  if (text.includes('shake') || text.includes('smoothie')) return '🥤';
+  if (text.includes('drink') || text.includes('beverage') || text.includes('cocktail') || text.includes('tea') || text.includes('coffee') || text.includes('chai') || text.includes('mojito')) return '🍹';
+  if (text.includes('pizza')) return '🍕';
+  if (text.includes('dessert') || text.includes('cake') || text.includes('sweet') || text.includes('ice')) return '🍰';
+  if (text.includes('sandwich') || text.includes('wrap') || text.includes('roll')) return '🥪';
+  if (text.includes('biryani') || text.includes('rice') || text.includes('curry') || text.includes('bowl')) return '🍲';
+  return '🍽️';
 };
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
+  menu,
   categories,
   popularItems,
   booth,
@@ -35,6 +44,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   cartCount,
 }) => {
   const { formatCurrency } = useCart();
+  const [logoError, setLogoError] = useState(false);
+
+  const cafeName = menu?.cafe_profile?.name || 'FAUGET BURGER';
+  const nameParts = cafeName.trim().split(' ');
+  const brandFirst = nameParts[0] || 'FAUGET';
+  const brandSecond = nameParts.slice(1).join(' ') || 'BURGER';
+  const brandTagline = menu?.cafe_profile?.tagline || 'Good Food. Better Moods.';
+
+  const heroSection = menu?.sections?.[0];
+  const heroWords = (heroSection?.name || 'Bigger Burgers').split(' ');
+  const heroLine1 = heroWords[0] || 'Bigger';
+  const heroLine2 = heroWords.slice(1).join(' ') || 'Burgers';
+
+  const heroTaglineWords = (heroSection?.tagline || 'Bolder Flavours').split(' ');
+  const heroLine3 = heroTaglineWords[0] || 'Bolder';
+  const heroLine4 = heroTaglineWords.slice(1).join(' ') || 'Flavours';
+
+  const heroImage =
+    popularItems[0]?.images?.[0]?.url ||
+    getFoodImageFallback(popularItems[0]?.name || heroLine2, heroLine1);
 
   return (
     <div className="min-h-screen bg-[#F7EFE3] text-[#1C1917] pb-28 font-sans px-5 pt-3 max-w-md mx-auto">
@@ -51,16 +80,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Top Header Row: Logo & Brand + Cart Icon */}
       <div className="flex items-start justify-between mb-1">
         <div className="flex items-center space-x-2.5">
-          {/* Retro 3D Burger Icon Badge */}
-          <div className="w-11 h-11 rounded-2xl bg-[#1C1917] text-[#F7EFE3] flex items-center justify-center font-bold text-2xl shadow-[0_6px_16px_rgba(28,25,23,0.3),inset_0_1px_1px_rgba(255,255,255,0.25)] border border-black/30">
-            🍔
+          {/* Retro 3D Logo Badge */}
+          <div className="w-11 h-11 rounded-2xl bg-[#1C1917] text-[#F7EFE3] flex items-center justify-center font-bold text-2xl shadow-[0_6px_16px_rgba(28,25,23,0.3),inset_0_1px_1px_rgba(255,255,255,0.25)] border border-black/30 overflow-hidden">
+            {menu?.cafe_profile?.logo_url && !logoError ? (
+              <img
+                src={menu.cafe_profile.logo_url}
+                alt={cafeName}
+                onError={() => setLogoError(true)}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span>☕</span>
+            )}
           </div>
           <div>
-            <h1 className="font-serif font-black text-xl leading-none tracking-tight text-[#1C1917] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
-              FAUGET
+            <h1 className="font-serif font-black text-xl leading-none tracking-tight text-[#1C1917] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] uppercase">
+              {brandFirst}
             </h1>
-            <h1 className="font-serif font-black text-xl leading-none tracking-tight text-[#1C1917] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
-              BURGER
+            <h1 className="font-serif font-black text-xl leading-none tracking-tight text-[#1C1917] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] uppercase">
+              {brandSecond}
             </h1>
           </div>
         </div>
@@ -81,15 +119,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       </div>
 
       {/* Brand Tagline */}
-      <p className="text-xs text-[#7E756B] font-medium mb-1.5 ml-0.5">
-        Good Food. Better Moods.
+      <p className="text-xs text-[#7E756B] font-medium mb-1.5 ml-0.5 line-clamp-1">
+        {brandTagline}
       </p>
 
       {/* Location / Table Booth Selector */}
       <div className="flex items-center space-x-1 text-xs text-[#7E756B] mb-3 ml-0.5">
         <MapPin className="w-3.5 h-3.5 text-[#1C1917]" />
-        <span className="font-semibold text-[#1C1917]">
-          {booth ? `${booth.booth_label}, ${booth.zone || 'Downtown'}` : 'Baker Street, Downtown'}
+        <span className="font-semibold text-[#1C1917] line-clamp-1">
+          {booth ? `${booth.booth_label}${booth.zone ? ` • ${booth.zone}` : ''}` : (menu?.cafe_profile?.address || 'Table 04 • Indoor AC')}
         </span>
         <ChevronDown className="w-3.5 h-3.5 text-[#7E756B]" />
       </div>
@@ -99,7 +137,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <Search className="absolute left-3.5 top-3 w-4 h-4 text-[#8E8276]" />
         <input
           type="text"
-          placeholder="Search for burgers, snacks, drinks..."
+          placeholder="Search items, drinks, snacks..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full bg-[#EFE5D8] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[#1C1917] placeholder-[#8E8276] focus:outline-none focus:ring-2 focus:ring-[#1C1917]/20 border border-[#E2D5C3] shadow-[inset_0_2px_4px_rgba(28,25,23,0.06),0_1px_2px_rgba(255,255,255,0.8)] transition"
@@ -111,28 +149,31 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <div className="flex items-center justify-between">
           <div className="max-w-[150px]">
             <h2 className="font-serif font-black text-2xl leading-tight tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-              Bigger
+              {heroLine1}
             </h2>
             <h2 className="font-serif font-black text-2xl leading-tight tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-              Burgers
+              {heroLine2}
             </h2>
             <h2 className="font-serif font-black text-2xl leading-tight tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-              Bolder
+              {heroLine3}
             </h2>
             <h2 className="font-serif font-black text-2xl leading-tight tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-              Flavours
+              {heroLine4}
             </h2>
           </div>
 
           <div className="relative w-36 h-28 shrink-0 flex items-center justify-center">
             <img
-              src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80"
-              alt="Bigger Burgers"
+              src={heroImage}
+              alt={heroLine2}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = getFoodImageFallback(heroLine2, heroLine1);
+              }}
               className="w-32 h-28 object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.6)] hover:scale-105 transition-transform"
             />
             {/* 3D Arrow Action */}
             <button
-              onClick={() => onSelectCategory(categories[0]?.id || 'cat_burgers')}
+              onClick={() => onSelectCategory(categories[0]?.id || '')}
               className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white text-[#1C1917] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.35),0_1px_3px_rgba(255,255,255,0.6)] hover:scale-110 active:scale-95 transition"
             >
               <ArrowRight className="w-4 h-4 stroke-[2.5]" />
@@ -151,7 +192,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Elevated 3D Category Circular Avatars Row */}
       <div className="grid grid-cols-4 gap-3 mb-6">
         {categories.slice(0, 4).map((cat) => {
-          const icon = CATEGORY_ICONS[cat.id] || '🍔';
+          const icon = getCategoryIcon(cat.name, cat.id);
           return (
             <button
               key={cat.id}
@@ -161,7 +202,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <div className="w-15 h-15 rounded-full bg-[#EFE5D8] group-hover:bg-[#E5DACD] border border-[#E0D2C0] flex items-center justify-center text-2xl shadow-[0_8px_18px_-3px_rgba(142,130,118,0.3),0_2px_6px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(255,255,255,0.9)] mb-1.5 transition-all group-hover:shadow-[0_10px_22px_-2px_rgba(142,130,118,0.4)]">
                 <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]">{icon}</span>
               </div>
-              <span className="text-[11px] font-bold text-[#1C1917] text-center tracking-tight drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
+              <span className="text-[11px] font-bold text-[#1C1917] text-center tracking-tight drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] line-clamp-1">
                 {cat.name}
               </span>
             </button>
@@ -176,7 +217,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             Popular Picks
           </h3>
           <button
-            onClick={() => onSelectCategory(categories[0]?.id || 'cat_burgers')}
+            onClick={() => onSelectCategory(categories[0]?.id || '')}
             className="text-xs font-bold text-[#7E756B] hover:text-[#1C1917] transition flex items-center space-x-0.5"
           >
             <span>View all</span>
@@ -195,8 +236,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <div>
                 <div className="w-full h-24 rounded-xl overflow-hidden mb-2 bg-[#EFE5D8] shadow-[0_3px_8px_rgba(0,0,0,0.06)]">
                   <img
-                    src={item.images?.[0]?.url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80'}
+                    src={item.images?.[0]?.url || getFoodImageFallback(item.name)}
                     alt={item.name}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
+                    }}
                     className="w-full h-full object-cover"
                   />
                 </div>

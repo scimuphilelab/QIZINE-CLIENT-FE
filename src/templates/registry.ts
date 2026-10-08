@@ -37,18 +37,41 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateMeta> = {
   },
 };
 
-export const DEFAULT_TEMPLATE_ID = 'tpl_default';
+export const DEFAULT_TEMPLATE_ID = 'tpl_modern_01';
 
 export function resolveTemplate(templateId?: string): TemplateMeta {
   if (templateId) {
-    if (TEMPLATE_REGISTRY[templateId]) {
-      return TEMPLATE_REGISTRY[templateId];
+    const normalized = templateId.toLowerCase().trim();
+    if (TEMPLATE_REGISTRY[normalized]) {
+      return TEMPLATE_REGISTRY[normalized];
     }
-    if (templateId === 'tpl_modern_01') {
+    if (
+      normalized === 'tpl_modern_01' ||
+      normalized === 'modern_01' ||
+      normalized === 'modern' ||
+      normalized === 'tpl_editorial' ||
+      normalized === 'editorial' ||
+      normalized === 'vintage_burger'
+    ) {
       return TEMPLATE_REGISTRY.tpl_modern_01;
     }
-    if (templateId === 'tpl_modern_02') {
+    if (
+      normalized === 'tpl_modern_02' ||
+      normalized === 'modern_02' ||
+      normalized === 'tpl_street_bistro' ||
+      normalized === 'street_bistro' ||
+      normalized === 'bistro'
+    ) {
       return TEMPLATE_REGISTRY.tpl_modern_02;
+    }
+    if (
+      normalized === 'tpl_default' ||
+      normalized === 'default' ||
+      normalized === 'tpl_swiggy_modern' ||
+      normalized === 'swiggy_modern' ||
+      normalized === 'minimal_modern'
+    ) {
+      return TEMPLATE_REGISTRY.tpl_default;
     }
   }
   return TEMPLATE_REGISTRY[DEFAULT_TEMPLATE_ID];

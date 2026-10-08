@@ -243,7 +243,7 @@ export const CustomizationModal: React.FC<CustomizationModalProps> = ({
                   </div>
 
                   <div className="space-y-2">
-                    {group.addons.map((addon) => {
+                    {(group.addons || group.options || []).map((addon) => {
                       const isSelected = selectedAddons.some((a) => a.id === addon.id);
                       return (
                         <button

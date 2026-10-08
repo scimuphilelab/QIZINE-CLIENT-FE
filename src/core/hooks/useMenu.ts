@@ -8,6 +8,7 @@ export interface UseMenuResult {
   error: string | null;
   sections: MenuSection[];
   categories: MenuCategory[];
+  allCategories: MenuCategory[];
   activeSection: MenuSection | null;
   activeCategory: MenuCategory | null;
   selectedSectionId: string | null;
@@ -39,10 +40,20 @@ export function useMenu(): UseMenuResult {
     return activeSection ? activeSection.categories.filter((c) => c.is_active) : [];
   }, [activeSection]);
 
+  const allCategories = useMemo(() => {
+    return sections.flatMap((s) => s.categories.filter((c) => c.is_active));
+  }, [sections]);
+
   const activeCategory = useMemo(() => {
-    if (!categories.length) return null;
-    return categories.find((c) => c.id === selectedCategoryId) || categories[0];
-  }, [categories, selectedCategoryId]);
+    if (!categories.length) {
+      return allCategories[0] || null;
+    }
+    return (
+      categories.find((c) => c.id === selectedCategoryId) ||
+      allCategories.find((c) => c.id === selectedCategoryId) ||
+      categories[0]
+    );
+  }, [categories, allCategories, selectedCategoryId]);
 
   // Group filtered items into categories for seamless continuous-scroll UI layouts
   const categoriesWithFilteredItems = useMemo(() => {
@@ -64,6 +75,7 @@ export function useMenu(): UseMenuResult {
     ...context,
     sections,
     categories,
+    allCategories,
     activeSection,
     activeCategory,
     categoriesWithFilteredItems,

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import type { MenuCategory, MenuItem } from '../../../core/types/menu.types';
 import { useCart } from '../../../core/hooks/useCart';
+import { getFoodImageFallback } from '../../../core/utils/imageFallback';
 
 export interface CategoryScreenProps {
   category: MenuCategory;
@@ -17,14 +18,28 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
   onQuickAdd,
 }) => {
   const { formatCurrency } = useCart();
-  const [filter, setFilter] = useState<'All' | 'Veg' | 'Chicken' | 'Beef'>('All');
+  const [filter, setFilter] = useState<'All' | 'Veg' | 'Non-Veg'>('All');
+
+  const getCategoryIcon = (catName: string, catId: string): string => {
+    const text = `${catName} ${catId}`.toLowerCase();
+    if (text.includes('burger')) return '🍔';
+    if (text.includes('fry') || text.includes('fries') || text.includes('appetizer') || text.includes('snack') || text.includes('starter')) return '🍟';
+    if (text.includes('shake') || text.includes('smoothie')) return '🥤';
+    if (text.includes('drink') || text.includes('beverage') || text.includes('cocktail') || text.includes('tea') || text.includes('coffee') || text.includes('chai')) return '🍹';
+    if (text.includes('pizza')) return '🍕';
+    if (text.includes('dessert') || text.includes('cake') || text.includes('sweet') || text.includes('ice')) return '🍰';
+    if (text.includes('sandwich') || text.includes('wrap') || text.includes('roll')) return '🥪';
+    if (text.includes('biryani') || text.includes('rice') || text.includes('curry') || text.includes('bowl')) return '🍲';
+    return '🍽️';
+  };
+
+  const categoryIcon = getCategoryIcon(category.name, category.id);
 
   // Filter items based on selected pill
   const filteredItems = useMemo(() => {
     if (filter === 'All') return category.items;
     if (filter === 'Veg') return category.items.filter((i) => i.diet_type === 'VEG' || i.diet_type === 'VEGAN');
-    if (filter === 'Chicken') return category.items.filter((i) => i.name.toLowerCase().includes('chicken') || i.diet_type === 'NON_VEG');
-    if (filter === 'Beef') return category.items.filter((i) => i.diet_type === 'NON_VEG' && !i.name.toLowerCase().includes('chicken'));
+    if (filter === 'Non-Veg') return category.items.filter((i) => i.diet_type === 'NON_VEG' || i.diet_type === 'EGG');
     return category.items;
   }, [category.items, filter]);
 
@@ -49,26 +64,26 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
         <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
       </button>
 
-      {/* Category Header with Title & 3D Doodle Burger Box */}
+      {/* Category Header with Title & 3D Doodle Box */}
       <div className="flex items-start justify-between mb-4">
         <div>
           <h1 className="font-serif font-black text-2xl tracking-tight text-[#1C1917] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
             {category.name}
           </h1>
           <p className="text-xs text-[#7E756B] mt-0.5 max-w-[200px] leading-relaxed">
-            {category.description || 'Fresh ingredients. Juicy bites. Only the best.'}
+            {category.description || 'Fresh ingredients. Crafted to perfection. Only the finest.'}
           </p>
         </div>
 
         {/* Vintage Line Doodle Illustration with 3D Depth */}
         <div className="w-16 h-16 rounded-2xl bg-[#EFE5D8] border border-[#E0D2C0] shadow-[0_6px_14px_rgba(142,130,118,0.25),inset_0_1px_2px_rgba(255,255,255,0.9)] flex items-center justify-center p-2 text-2xl">
-          <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]">🍔</span>
+          <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]">{categoryIcon}</span>
         </div>
       </div>
 
       {/* 3D Filter Pills */}
       <div className="flex items-center space-x-2 mb-4 overflow-x-auto no-scrollbar py-1">
-        {(['All', 'Veg', 'Chicken', 'Beef'] as const).map((opt) => {
+        {(['All', 'Veg', 'Non-Veg'] as const).map((opt) => {
           const isActive = filter === opt;
           return (
             <button
@@ -97,8 +112,11 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
             {/* Left Image with shadow */}
             <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 bg-[#EFE5D8] shadow-[0_3px_8px_rgba(0,0,0,0.08)]">
               <img
-                src={item.images?.[0]?.url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80'}
+                src={item.images?.[0]?.url || getFoodImageFallback(item.name, category.name)}
                 alt={item.name}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = getFoodImageFallback(item.name, category.name);
+                }}
                 className="w-full h-full object-cover"
               />
             </div>

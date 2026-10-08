@@ -3,6 +3,7 @@ import { ArrowLeft, Heart, Plus, Minus, Check } from 'lucide-react';
 import type { MenuItem, MenuItemAddon } from '../../../core/types/menu.types';
 import type { SelectedAddon } from '../../../core/types/order.types';
 import { useCart } from '../../../core/hooks/useCart';
+import { getFoodImageFallback } from '../../../core/utils/imageFallback';
 
 export interface ItemDetailScreenProps {
   item: MenuItem;
@@ -20,12 +21,10 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
 
-  // Default addons if none configured
-  const availableAddons: MenuItemAddon[] = item.addon_groups?.[0]?.addons || [
-    { id: 'add_cheese', name: 'Add extra cheese', price_paise: 1500, in_stock: true },
-    { id: 'add_bacon', name: 'Add bacon', price_paise: 2000, in_stock: true },
-    { id: 'add_patty', name: 'Extra patty', price_paise: 3500, in_stock: true },
-  ];
+  // Extract addons from MongoDB item document structure (supporting options or addons array)
+  const firstAddonGroup = item.addon_groups?.[0];
+  const availableAddons: MenuItemAddon[] =
+    firstAddonGroup?.options || firstAddonGroup?.addons || [];
 
   const handleToggleAddon = (addon: MenuItemAddon) => {
     const exists = selectedAddons.some((a) => a.id === addon.id);
@@ -38,7 +37,7 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
           id: addon.id,
           name: addon.name,
           price_paise: addon.price_paise,
-          group_id: 'grp_extras',
+          group_id: firstAddonGroup?.id || 'grp_extras',
         },
       ]);
     }
@@ -57,8 +56,11 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
       {/* Top Hero Image Area */}
       <div className="relative h-72 w-full bg-[#1C1917] overflow-hidden">
         <img
-          src={item.images?.[0]?.url || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80'}
+          src={item.images?.[0]?.url || getFoodImageFallback(item.name)}
           alt={item.name}
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
+          }}
           className="w-full h-full object-cover brightness-95"
         />
 

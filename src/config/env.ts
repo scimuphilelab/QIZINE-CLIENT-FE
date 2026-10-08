@@ -1,10 +1,10 @@
 /**
  * Environment Configuration & Backend API Endpoints Registry
- * Strictly mapped to CLIENT-FRM.md backend contracts
+ * Mapped to QR-ORDER-BE Express routes (/v1/...) & CLIENT-FRM.md
  */
 
 export const ENV = {
-  API_BASE_URL: (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000',
+  API_BASE_URL: (import.meta.env.VITE_API_BASE_URL as string) || '/v1',
   ENABLE_MOCK_FALLBACK: (import.meta.env.VITE_ENABLE_MOCK_FALLBACK as string) !== 'false',
   VAPID_PUBLIC_KEY: (import.meta.env.VITE_VAPID_PUBLIC_KEY as string) || '',
   IS_DEV: import.meta.env.DEV,
@@ -12,39 +12,51 @@ export const ENV = {
 
 export const API_ENDPOINTS = {
   /**
-   * Fast-Path Menu & Booth Resolution (GET /api/v1/menu/resolve?q=:qr_key)
+   * Public Customer QR Scan (QR-ORDER-BE):
+   * GET /v1/qr-booths/scan/:qr_code_key
    */
-  MENU_RESOLVE: '/api/v1/menu/resolve',
+  QR_SCAN: (qrCodeKey: string) => `/qr-booths/scan/${encodeURIComponent(qrCodeKey)}`,
 
   /**
-   * Zero-Trust Order Placement (POST /api/v1/orders)
+   * Fast-Path Menu Resolve Fallback:
+   * GET /api/v1/menu/resolve?q=:qr_key
    */
-  CREATE_ORDER: '/api/v1/orders',
+  MENU_RESOLVE: (qrKey: string) => `/api/v1/menu/resolve?q=${encodeURIComponent(qrKey)}`,
 
   /**
-   * Fetch Single Order Summary (GET /api/v1/orders/:id?token=:ref_token)
+   * Place Order (QR-ORDER-BE):
+   * POST /v1/orders/create
+   */
+  CREATE_ORDER: '/orders/create',
+
+  /**
+   * Order Details (QR-ORDER-BE):
+   * GET /v1/orders/fetch-details/:id
    */
   ORDER_DETAIL: (orderId: string, refToken?: string) =>
-    refToken ? `/api/v1/orders/${orderId}?token=${encodeURIComponent(refToken)}` : `/api/v1/orders/${orderId}`,
+    refToken ? `/orders/fetch-details/${orderId}?token=${encodeURIComponent(refToken)}` : `/orders/fetch-details/${orderId}`,
 
   /**
-   * Customer Order Cancellation (POST /api/v1/orders/:id/cancel)
+   * Customer Self-Cancellation (QR-ORDER-BE):
+   * POST /v1/orders/cancel/:id
    */
-  ORDER_CANCEL: (orderId: string) => `/api/v1/orders/${orderId}/cancel`,
+  ORDER_CANCEL: (orderId: string) => `/orders/cancel/${orderId}`,
 
   /**
-   * Real-Time SSE Order Status Stream (GET /api/v1/orders/:id/stream?token=:ref_token)
+   * Real-Time SSE Stream (QR-ORDER-BE):
+   * GET /v1/events/stream?order_id=:id&vendor_id=:vendor_id
    */
-  ORDER_STREAM: (orderId: string, refToken: string) =>
-    `${ENV.API_BASE_URL}/api/v1/orders/${orderId}/stream?token=${encodeURIComponent(refToken)}`,
+  ORDER_STREAM: (orderId: string, vendorId?: string) =>
+    `${ENV.API_BASE_URL}/events/stream?order_id=${encodeURIComponent(orderId)}${vendorId ? `&vendor_id=${encodeURIComponent(vendorId)}` : ''}`,
 
   /**
-   * Floor Assistance & Waiter Call (POST /api/v1/service-requests)
+   * Floor Assistance & Call Waiter (QR-ORDER-BE):
+   * POST /v1/service-requests/create
    */
-  SERVICE_REQUEST: '/api/v1/service-requests',
+  SERVICE_REQUEST: '/service-requests/create',
 
   /**
-   * Web Push Subscription Registration (POST /api/v1/notifications/subscribe)
+   * Web Push Subscription
    */
-  SUBSCRIBE_PUSH: '/api/v1/notifications/subscribe',
+  SUBSCRIBE_PUSH: '/notifications/subscribe',
 } as const;

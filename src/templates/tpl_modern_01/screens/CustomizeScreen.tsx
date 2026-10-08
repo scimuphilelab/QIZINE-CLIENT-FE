@@ -19,12 +19,10 @@ export const CustomizeScreen: React.FC<CustomizeScreenProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
 
-  const availableAddons: MenuItemAddon[] = item.addon_groups?.[0]?.addons || [
-    { id: 'add_cheese', name: 'Extra Cheese', price_paise: 1500, in_stock: true },
-    { id: 'add_bacon', name: 'Bacon', price_paise: 2000, in_stock: true },
-    { id: 'add_patty', name: 'Extra Patty', price_paise: 3500, in_stock: true },
-    { id: 'add_jalapeno', name: 'Jalapeños', price_paise: 1000, in_stock: true },
-  ];
+  // Extract addons dynamically from MongoDB item document structure
+  const firstAddonGroup = item.addon_groups?.[0];
+  const availableAddons: MenuItemAddon[] =
+    firstAddonGroup?.options || firstAddonGroup?.addons || [];
 
   const handleToggleAddon = (addon: MenuItemAddon) => {
     const exists = selectedAddons.some((a) => a.id === addon.id);
@@ -37,7 +35,7 @@ export const CustomizeScreen: React.FC<CustomizeScreenProps> = ({
           id: addon.id,
           name: addon.name,
           price_paise: addon.price_paise,
-          group_id: 'grp_extras',
+          group_id: firstAddonGroup?.id || 'grp_extras',
         },
       ]);
     }

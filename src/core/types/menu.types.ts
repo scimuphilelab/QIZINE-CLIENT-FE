@@ -4,7 +4,7 @@
 
 export type DietType = 'VEG' | 'NON_VEG' | 'EGG' | 'VEGAN';
 export type MenuStatus = 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
-export type PricingType = 'FLAT' | 'VARIANT';
+export type PricingType = 'FLAT' | 'SINGLE' | 'VARIANT' | string;
 
 export interface CafeSocials {
   instagram?: string;
@@ -85,7 +85,9 @@ export interface MenuItemAddonGroup {
   title: string;
   min_selection: number;
   max_selection: number;
-  addons: MenuItemAddon[];
+  is_required?: boolean;
+  addons?: MenuItemAddon[];
+  options?: MenuItemAddon[];
 }
 
 export interface MenuItem {
@@ -102,8 +104,11 @@ export interface MenuItem {
   variants?: MenuItemVariant[];
   addon_groups?: MenuItemAddonGroup[];
   tags?: string[];
+  allergens?: string[];
   is_active?: boolean;
+  is_visible?: boolean;
   in_stock?: boolean;
+  sort_order?: number;
 }
 
 export interface MenuCategorySchedule {

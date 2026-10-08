@@ -1,8 +1,8 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, AxiosError } from 'axios';
 import { ENV, API_ENDPOINTS } from '../../config/env';
 import type { MongoMenuDocument } from '../types/menu.types';
-import type { QRBoothContext, OrderStatus, PaymentStatus } from '../types/order.types';
-import { SAMPLE_MENU } from '../data/sampleMenu';
+import type { QRBoothContext, OrderStatus, PaymentStatus, ServingModel } from '../types/order.types';
+import { normalizeResolveData } from '../utils/menuNormalizer';
 
 /**
  * Standard API Response envelope
@@ -22,13 +22,15 @@ export interface ResolveResponseData {
     label: string;
     zone?: string;
     seats?: number;
-    serving_model: 'WAITER_SERVING' | 'SELF_SERVING' | 'DELIVERY';
+    serving_model: ServingModel;
+    qr_code_key?: string;
   };
   vendor: {
     id: string;
     name: string;
     business_type: string;
     slug?: string;
+    serving_model?: ServingModel;
     accept_order_type: 'PREPAID' | 'POSTPAID';
     order_confirmation_model: string;
     currency: string;
@@ -105,7 +107,7 @@ apiClient.interceptors.request.use(
 // Response Interceptor: Standardizes error messages
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error: AxiosError<{ message?: string; error?: string }>) => {
+  (error: AxiosError<{ success?: boolean; message?: string; error?: string }>) => {
     let errorMessage = 'Network error or service unavailable.';
     if (error.response?.data?.message) {
       errorMessage = error.response.data.message;
@@ -123,45 +125,34 @@ apiClient.interceptors.response.use(
  */
 export const QizineApi = {
   /**
-   * View 1: Fast-Path Menu & Booth Resolution
+   * View 1: Fast-Path Menu & Booth Resolution from Backend
    */
   async resolveMenu(qrKey: string): Promise<ResolveResponseData> {
+    const cleanedKey = qrKey.trim();
+    if (!cleanedKey) {
+      throw new Error('Please provide a valid QR booth code.');
+    }
+
     try {
-      const response = await apiClient.get<ApiResponse<ResolveResponseData>>(
-        `${API_ENDPOINTS.MENU_RESOLVE}?q=${encodeURIComponent(qrKey)}`
-      );
-      if (response.data?.data) {
-        return response.data.data;
+      const scanUrl = API_ENDPOINTS.QR_SCAN(cleanedKey);
+      const response = await apiClient.get<ApiResponse<any>>(scanUrl);
+
+      if (response.data?.success && response.data?.data) {
+        return normalizeResolveData(response.data.data);
       }
-      throw new Error('Invalid menu resolution response');
-    } catch (err) {
-      if (ENV.ENABLE_MOCK_FALLBACK) {
-        console.warn(`[QizineApi] Backend resolution failed, using fallback mock dataset:`, err);
-        return {
-          booth: {
-            id: 'bth_table_4',
-            label: 'Table 04',
-            zone: 'Indoor AC',
-            seats: 4,
-            serving_model: 'WAITER_SERVING',
-          },
-          vendor: {
-            id: SAMPLE_MENU.cafe_id,
-            name: SAMPLE_MENU.cafe_profile.name,
-            business_type: 'CAFE',
-            slug: 'chai-break-patia',
-            accept_order_type: 'PREPAID',
-            order_confirmation_model: 'MANUAL',
-            currency: SAMPLE_MENU.cafe_profile.currency || 'INR',
-            currency_symbol: SAMPLE_MENU.cafe_profile.currency_symbol || '₹',
-            is_open: true,
-            opening_time: '09:00:00',
-            closing_time: '23:00:00',
-          },
-          menu: SAMPLE_MENU,
-        };
+
+      if (response.data && response.data.data) {
+        return normalizeResolveData(response.data.data);
       }
-      throw err;
+
+      throw new Error(response.data?.message || 'Invalid or inactive QR code.');
+    } catch (err: any) {
+      // Propagate the exact message from backend
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        'Unable to resolve QR code. Booth or digital menu not found.';
+      throw new Error(message);
     }
   },
 
@@ -173,9 +164,25 @@ export const QizineApi = {
     idempotencyKey: string
   ): Promise<CreateOrderResponseData> {
     try {
+      // Format items to match QR-ORDER-BE OrderManager.placeCustomerOrder requirements
+      const backendPayload = {
+        qr_key: payload.qr_key,
+        customer_name: payload.customer_name,
+        customer_phone: payload.customer_phone,
+        customer_note: payload.customer_note,
+        payment_method: payload.payment_method,
+        web_notif_config: payload.web_notif_config,
+        items: payload.items.map((it) => ({
+          item_id: it.item_id,
+          variant_id: it.variant_id,
+          qty: it.quantity,
+          addon_ids: it.customizations?.map((c) => c.option_id) || [],
+        })),
+      };
+
       const response = await apiClient.post<ApiResponse<CreateOrderResponseData>>(
         API_ENDPOINTS.CREATE_ORDER,
-        payload,
+        backendPayload,
         {
           headers: {
             'X-Idempotency-Key': idempotencyKey,

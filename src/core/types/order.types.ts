@@ -2,7 +2,7 @@
  * Strictly typed against the PostgreSQL Schema and Universal TRD Specification
  */
 
-export type ServingModel = 'WAITER_SERVING' | 'SELF_SERVING' | 'DELIVERY';
+export type ServingModel = 'WAITER_SERVING' | 'SELF_SERVING' | 'DELIVERY' | 'DINE_IN' | 'TAKEAWAY';
 export type AcceptOrderType = 'PREPAID' | 'POSTPAID';
 export type OrderConfirmationModel = 'MANUAL' | 'PA_CALLBACK' | 'MA_CALLBACK' | 'HYBRID';
 
