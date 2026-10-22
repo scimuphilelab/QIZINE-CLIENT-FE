@@ -15,8 +15,15 @@ import type { CreateOrderResponseData } from '../../core/api/axios';
 import type { TemplateProps } from '../registry';
 
 export const SwiggyModernTemplate: React.FC<TemplateProps> = ({ booth }) => {
-  const { categories, selectedCategoryId, setSelectedCategoryId, categoriesWithFilteredItems } =
-    useMenu();
+  const {
+    sections,
+    selectedSectionId,
+    setSelectedSectionId,
+    categories,
+    selectedCategoryId,
+    setSelectedCategoryId,
+    categoriesWithFilteredItems,
+  } = useMenu();
   const { hasItems, calculation, formatCurrency, addItem } = useCart();
 
   // Modals and Drawers state
@@ -49,8 +56,36 @@ export const SwiggyModernTemplate: React.FC<TemplateProps> = ({ booth }) => {
       {/* View 2: Header */}
       <Header booth={booth} onOpenWaiterCall={() => setWaiterModalOpen(true)} />
 
-      {/* Sticky Category Bar with Active Indicators */}
-      <nav className="sticky top-[115px] z-20 bg-background/90 backdrop-blur-md border-b border-black/5 py-2">
+      {/* Sticky Category & Section Bar with Active Indicators */}
+      <nav className="sticky top-[115px] z-20 bg-background/90 backdrop-blur-md border-b border-black/5 py-2 space-y-1.5">
+        {sections.length > 1 && (
+          <div className="max-w-xl mx-auto px-4 flex items-center space-x-1.5 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setSelectedSectionId('ALL')}
+              className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${
+                selectedSectionId === 'ALL'
+                  ? 'bg-black text-white shadow-xs'
+                  : 'bg-surface text-gray-700 hover:bg-gray-100 border border-black/5'
+              }`}
+            >
+              All Menus
+            </button>
+            {sections.map((sec) => (
+              <button
+                key={sec.id}
+                onClick={() => setSelectedSectionId(sec.id)}
+                className={`px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-all ${
+                  selectedSectionId === sec.id
+                    ? 'bg-black text-white shadow-xs'
+                    : 'bg-surface text-gray-700 hover:bg-gray-100 border border-black/5'
+                }`}
+              >
+                {sec.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="max-w-xl mx-auto px-4 flex items-center space-x-2 overflow-x-auto no-scrollbar">
           {categories.map((cat) => {
             const isSelected = selectedCategoryId === cat.id;

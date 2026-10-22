@@ -33,10 +33,14 @@ const getInitialQrKey = (): string => {
     if (pathParts[0] === 'scan' && pathParts[1]) {
       return decodeURIComponent(pathParts[1].trim());
     }
+
+    const saved = localStorage.getItem('qizine_last_qr_key');
+    if (saved && saved.trim()) return saved.trim();
   } catch {
     // fallback
   }
-  return '';
+  // Default to active test booth key for seamless local preview
+  return 'qr_oe234pwumurkd59y';
 };
 
 export const App: React.FC = () => {
@@ -83,6 +87,11 @@ export const App: React.FC = () => {
     QizineApi.resolveMenu(trimmed)
       .then((data) => {
         setResolutionData(data);
+        try {
+          localStorage.setItem('qizine_last_qr_key', trimmed);
+        } catch {
+          // ignore
+        }
 
         // Dynamically resolve template from Mongo document design_config.template_id
         const searchParams = new URLSearchParams(window.location.search);

@@ -13,8 +13,16 @@ import type { TemplateProps } from '../registry';
 import { Flame, ShoppingCart, Bell } from 'lucide-react';
 
 export const StreetBistroTemplate: React.FC<TemplateProps> = ({ booth }) => {
-  const { menu, categories, selectedCategoryId, setSelectedCategoryId, categoriesWithFilteredItems } =
-    useMenu();
+  const {
+    menu,
+    sections,
+    selectedSectionId,
+    setSelectedSectionId,
+    categories,
+    selectedCategoryId,
+    setSelectedCategoryId,
+    categoriesWithFilteredItems,
+  } = useMenu();
   const { hasItems, calculation, formatCurrency, addItem } = useCart();
 
   const [customiseItem, setCustomiseItem] = useState<MenuItem | null>(null);
@@ -71,8 +79,36 @@ export const StreetBistroTemplate: React.FC<TemplateProps> = ({ booth }) => {
         </div>
       </header>
 
-      {/* Chunky Bistro Category Pills */}
-      <nav className="sticky top-[69px] z-20 bg-[#FFF9F2]/90 backdrop-blur-md border-b border-orange-100 py-2.5">
+      {/* Chunky Bistro Section & Category Pills */}
+      <nav className="sticky top-[69px] z-20 bg-[#FFF9F2]/90 backdrop-blur-md border-b border-orange-100 py-2.5 space-y-2">
+        {sections.length > 1 && (
+          <div className="max-w-xl mx-auto px-4 flex space-x-1.5 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setSelectedSectionId('ALL')}
+              className={`px-3 py-1 rounded-full text-xs font-black whitespace-nowrap transition-all ${
+                selectedSectionId === 'ALL'
+                  ? 'bg-[#E65100] text-white shadow-xs'
+                  : 'bg-white text-gray-700 hover:bg-orange-50 border border-orange-200'
+              }`}
+            >
+              All Menus
+            </button>
+            {sections.map((sec) => (
+              <button
+                key={sec.id}
+                onClick={() => setSelectedSectionId(sec.id)}
+                className={`px-3 py-1 rounded-full text-xs font-black whitespace-nowrap transition-all ${
+                  selectedSectionId === sec.id
+                    ? 'bg-[#E65100] text-white shadow-xs'
+                    : 'bg-white text-gray-700 hover:bg-orange-50 border border-orange-200'
+                }`}
+              >
+                {sec.name}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="max-w-xl mx-auto px-4 flex space-x-2 overflow-x-auto no-scrollbar">
           {categories.map((c) => (
             <button

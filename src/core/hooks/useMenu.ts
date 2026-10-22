@@ -31,35 +31,36 @@ export function useMenu(): UseMenuResult {
     return menu ? menu.sections.filter((s) => s.is_active) : [];
   }, [menu]);
 
-  const activeSection = useMemo(() => {
-    if (!sections.length) return null;
-    return sections.find((s) => s.id === selectedSectionId) || sections[0];
-  }, [sections, selectedSectionId]);
-
-  const categories = useMemo(() => {
-    return activeSection ? activeSection.categories.filter((c) => c.is_active) : [];
-  }, [activeSection]);
-
   const allCategories = useMemo(() => {
     return sections.flatMap((s) => s.categories.filter((c) => c.is_active));
   }, [sections]);
 
-  const activeCategory = useMemo(() => {
-    if (!categories.length) {
-      return allCategories[0] || null;
+  const activeSection = useMemo(() => {
+    if (!sections.length) return null;
+    if (selectedSectionId === 'ALL') return null;
+    return sections.find((s) => s.id === selectedSectionId) || null;
+  }, [sections, selectedSectionId]);
+
+  const categories = useMemo(() => {
+    if (activeSection) {
+      return activeSection.categories.filter((c) => c.is_active);
     }
-    return (
-      categories.find((c) => c.id === selectedCategoryId) ||
-      allCategories.find((c) => c.id === selectedCategoryId) ||
-      categories[0]
-    );
+    // If 'ALL' or no section is selected, show all active categories across all sections
+    return allCategories;
+  }, [activeSection, allCategories]);
+
+  const activeCategory = useMemo(() => {
+    if (selectedCategoryId) {
+      const found = allCategories.find((c) => c.id === selectedCategoryId);
+      if (found) return found;
+    }
+    return categories[0] || allCategories[0] || null;
   }, [categories, allCategories, selectedCategoryId]);
 
   // Group filtered items into categories for seamless continuous-scroll UI layouts
   const categoriesWithFilteredItems = useMemo(() => {
-    if (!activeSection) return [];
-    return activeSection.categories
-      .filter((cat) => cat.is_active)
+    const targetCats = categories;
+    return targetCats
       .map((cat) => {
         const catItemIds = new Set(cat.items.map((i) => i.id));
         const matchedItems = filteredItems.filter((item) => catItemIds.has(item.id));
@@ -69,7 +70,7 @@ export function useMenu(): UseMenuResult {
         };
       })
       .filter((cat) => cat.items.length > 0);
-  }, [activeSection, filteredItems]);
+  }, [categories, filteredItems]);
 
   return {
     ...context,

@@ -24,8 +24,18 @@ export type ScreenState =
   | 'tracker';
 
 export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
-  const { menu, categories, selectedCategoryId, setSelectedCategoryId, searchQuery, setSearchQuery } =
-    useMenu();
+  const {
+    menu,
+    sections,
+    categories,
+    allCategories,
+    selectedSectionId,
+    setSelectedSectionId,
+    selectedCategoryId,
+    setSelectedCategoryId,
+    searchQuery,
+    setSearchQuery,
+  } = useMenu();
   const { items, calculation, addItem, clearCart } = useCart();
 
   // Navigation State
@@ -46,24 +56,24 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
   // Current active category for Category Screen
   const activeCategory: MenuCategory = useMemo(() => {
     if (selectedCategoryId) {
-      const found = categories.find((c) => c.id === selectedCategoryId);
+      const found = allCategories.find((c) => c.id === selectedCategoryId);
       if (found) return found;
     }
-    return categories[0] || {
-      id: 'cat_burgers',
-      name: 'Burgers',
-      description: 'Fresh ingredients. Juicy bites. Only the best.',
+    return categories[0] || allCategories[0] || {
+      id: 'cat_all',
+      name: 'All Items',
+      description: 'Handcrafted dishes and beverages.',
       sort_order: 1,
       is_active: true,
       items: [],
     };
-  }, [categories, selectedCategoryId]);
+  }, [categories, allCategories, selectedCategoryId]);
 
-  // Popular items flattened
+  // Popular items flattened across all categories
   const popularItems: MenuItem[] = useMemo(() => {
-    const all = categories.flatMap((c) => c.items);
-    return all.slice(0, 4);
-  }, [categories]);
+    const all = allCategories.flatMap((c) => c.items);
+    return all.slice(0, 6);
+  }, [allCategories]);
 
   // Tab change handler
   const handleTabChange = (tab: NavTab) => {
@@ -84,9 +94,25 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     }
   };
 
+  // Section change handler
+  const handleSelectSection = (sectionId: string) => {
+    setSelectedSectionId(sectionId);
+    if (sectionId !== 'ALL') {
+      const targetSec = sections.find((s) => s.id === sectionId);
+      if (targetSec && targetSec.categories.length > 0) {
+        setSelectedCategoryId(targetSec.categories[0].id);
+      }
+    }
+  };
+
   // Navigate to category screen
   const handleSelectCategory = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
+    setCurrentScreen('category');
+    setActiveTab('menu');
+  };
+
+  const handleOpenMenu = () => {
     setCurrentScreen('category');
     setActiveTab('menu');
   };
@@ -187,7 +213,11 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
       {currentScreen === 'home' && (
         <HomeScreen
           menu={menu}
+          sections={sections}
+          selectedSectionId={selectedSectionId}
+          onSelectSection={handleSelectSection}
           categories={categories}
+          allCategories={allCategories}
           popularItems={popularItems}
           booth={booth}
           searchQuery={searchQuery}
@@ -198,14 +228,21 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
             setCurrentScreen('cart');
             setActiveTab('cart');
           }}
+          onOpenMenu={handleOpenMenu}
           cartCount={calculation.total_items_count}
         />
       )}
 
-      {/* 2. Category Screen */}
+      {/* 2. Category / Menu Catalog Screen */}
       {currentScreen === 'category' && (
         <CategoryScreen
           category={activeCategory}
+          sections={sections}
+          selectedSectionId={selectedSectionId}
+          onSelectSection={handleSelectSection}
+          categories={categories}
+          selectedCategoryId={selectedCategoryId}
+          onSelectCategory={handleSelectCategory}
           onBack={() => {
             setCurrentScreen('home');
             setActiveTab('home');

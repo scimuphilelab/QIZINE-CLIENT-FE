@@ -28,21 +28,28 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children, initialMen
   const [menu, setMenu] = useState<MongoMenuDocument | null>(initialMenu);
   const [loading, setLoading] = useState<boolean>(!initialMenu);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
+  const [selectedSectionId, setSelectedSectionId] = useState<string | null>('ALL');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [dietFilter, setDietFilter] = useState<DietType | 'ALL'>('ALL');
 
+  // Sync menu state whenever initialMenu prop updates
+  useEffect(() => {
+    if (initialMenu) {
+      setMenu(initialMenu);
+      setLoading(false);
+    }
+  }, [initialMenu]);
+
   // Initialize selected section and category when menu loads
   useEffect(() => {
     if (menu && menu.sections.length > 0) {
-      const activeSection = menu.sections.find((s) => s.is_active) || menu.sections[0];
-      if (activeSection) {
-        setSelectedSectionId(activeSection.id);
-        const activeCategory = activeSection.categories.find((c) => c.is_active) || activeSection.categories[0];
-        if (activeCategory) {
-          setSelectedCategoryId(activeCategory.id);
-        }
+      // Default to ALL so customer sees all sections initially
+      setSelectedSectionId('ALL');
+      const firstActiveCategory = menu.sections
+        .flatMap((s) => (s.is_active ? s.categories.filter((c) => c.is_active) : []))[0];
+      if (firstActiveCategory) {
+        setSelectedCategoryId(firstActiveCategory.id);
       }
       setLoading(false);
     }
@@ -60,7 +67,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children, initialMen
       );
   }, [menu]);
 
-  // Filter items based on active category, search query, and diet filter
+  // Filter items based on active category, section, search query, and diet filter
   const filteredItems = useMemo(() => {
     let result = allItems;
 
@@ -81,6 +88,13 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children, initialMen
         .find((c) => c.id === selectedCategoryId);
 
       result = targetCategory ? targetCategory.items.filter((i) => i.is_active !== false) : [];
+    } else if (selectedSectionId && selectedSectionId !== 'ALL') {
+      const targetSection = menu?.sections.find((s) => s.id === selectedSectionId);
+      result = targetSection
+        ? targetSection.categories
+            .filter((c) => c.is_active)
+            .flatMap((c) => c.items.filter((i) => i.is_active !== false))
+        : allItems;
     }
 
     // Apply dietary filter
@@ -89,7 +103,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children, initialMen
     }
 
     return result;
-  }, [allItems, searchQuery, selectedCategoryId, dietFilter, menu]);
+  }, [allItems, searchQuery, selectedCategoryId, selectedSectionId, dietFilter, menu]);
 
   const value = useMemo(
     () => ({
