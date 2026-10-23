@@ -3,19 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #1F3D2B;
+  --color-primary: #FF385C;
   --color-primary-fg: #FFFFFF;
-  --color-secondary: #C8A15B;
-  --color-secondary-fg: #1A1A1A;
-  --color-accent: #D9534F;
-  --color-background: #FBF8F1;
+  --color-secondary: #FF6B81;
+  --color-secondary-fg: #FFFFFF;
+  --color-accent: #FF385C;
+  --color-background: #FAF4EE;
   --color-surface: #FFFFFF;
-  --color-surface-alt: #F7F5F0;
+  --color-surface-alt: #F5EEE6;
   --color-text: #1A1A1A;
-  --color-text-muted: #6B6B6B;
-  --font-heading: 'Playfair Display', serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --radius-brand: 1rem;
+  --font-heading: 'Poppins', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body: 'Poppins', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --radius-brand: 1.5rem;
 }
 
 /* Base resets & mobile optimizations */

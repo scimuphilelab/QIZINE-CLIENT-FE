@@ -224,31 +224,7 @@ export const App: React.FC = () => {
             <TemplateComponent booth={boothContext || undefined} />
           </Suspense>
 
-          {/* Floating Top Controls: QR Search/Scan & Template Switcher */}
-          <div className="fixed top-3 right-3 z-50 flex items-center space-x-2">
-            {/* QR Scan / Booth Search Button */}
-            <button
-              onClick={() => {
-                setQrInput(activeQrKey);
-                setQrModalOpen(true);
-              }}
-              className="bg-[#1C1917]/90 hover:bg-[#1C1917] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-[0_4px_12px_rgba(28,25,23,0.3)] backdrop-blur-md flex items-center space-x-1.5 transition active:scale-95 border border-white/10"
-              title="Scan or Search QR Code"
-            >
-              <QrCode className="w-3.5 h-3.5 text-amber-300" />
-              <span>{resolutionData.booth.label}</span>
-            </button>
-
-            {/* Template Selector Badge */}
-            <button
-              onClick={() => setSwitcherOpen(!switcherOpen)}
-              className="bg-[#1C1917]/90 hover:bg-[#1C1917] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-[0_4px_12px_rgba(28,25,23,0.3)] backdrop-blur-md flex items-center space-x-1.5 transition active:scale-95 border border-white/10"
-              title="Template Switcher"
-            >
-              <LayoutGrid className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{resolvedTemplate.name.split(' ')[0]}</span>
-            </button>
-          </div>
+          {/* Template rendering */}
 
           {/* Template Switcher Dropdown */}
           {switcherOpen && (

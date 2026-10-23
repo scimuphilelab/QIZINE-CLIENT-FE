@@ -53,6 +53,12 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     }
   });
 
+  // Dynamic Cafe Profile
+  const cafeName = menu?.cafe_profile?.name || booth?.vendor_name || 'Qizine Dining';
+  const tableLocation = booth
+    ? `${booth.booth_label}${booth.zone ? ` • ${booth.zone}` : ''}`
+    : (menu?.cafe_profile?.address || 'Table T-1 • Main Dining Hall');
+
   // Current active category for Category Screen
   const activeCategory: MenuCategory = useMemo(() => {
     if (selectedCategoryId) {
@@ -208,115 +214,131 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     currentScreen === 'home' || currentScreen === 'category' || currentScreen === 'cart';
 
   return (
-    <div className="min-h-screen bg-[#F7EFE3] selection:bg-[#1C1917]/20 selection:text-[#1C1917]">
-      {/* 1. Home / Menu Screen */}
-      {currentScreen === 'home' && (
-        <HomeScreen
-          menu={menu}
-          sections={sections}
-          selectedSectionId={selectedSectionId}
-          onSelectSection={handleSelectSection}
-          categories={categories}
-          allCategories={allCategories}
-          popularItems={popularItems}
-          booth={booth}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onSelectCategory={handleSelectCategory}
-          onSelectItem={handleSelectItem}
-          onOpenCart={() => {
-            setCurrentScreen('cart');
-            setActiveTab('cart');
-          }}
-          onOpenMenu={handleOpenMenu}
-          cartCount={calculation.total_items_count}
-        />
-      )}
+    <div className="min-h-screen bg-[#FAF4EE] selection:bg-[#FF385C]/20 selection:text-[#FF385C] flex flex-col justify-start">
+      <div className="w-full max-w-md sm:max-w-lg mx-auto min-h-screen bg-[#FAF4EE] relative flex flex-col shadow-2xl sm:my-4 sm:rounded-[36px] sm:border sm:border-stone-200/60 overflow-hidden">
+        {/* 1. Home / Menu Screen */}
+        {currentScreen === 'home' && (
+          <HomeScreen
+            menu={menu}
+            sections={sections}
+            selectedSectionId={selectedSectionId}
+            onSelectSection={handleSelectSection}
+            categories={categories}
+            allCategories={allCategories}
+            popularItems={popularItems}
+            booth={booth}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onSelectCategory={handleSelectCategory}
+            onSelectItem={handleSelectItem}
+            onOpenCart={() => {
+              setCurrentScreen('cart');
+              setActiveTab('cart');
+            }}
+            onOpenMenu={handleOpenMenu}
+            cartCount={calculation.total_items_count}
+          />
+        )}
 
-      {/* 2. Category / Menu Catalog Screen */}
-      {currentScreen === 'category' && (
-        <CategoryScreen
-          category={activeCategory}
-          sections={sections}
-          selectedSectionId={selectedSectionId}
-          onSelectSection={handleSelectSection}
-          categories={categories}
-          selectedCategoryId={selectedCategoryId}
-          onSelectCategory={handleSelectCategory}
-          onBack={() => {
-            setCurrentScreen('home');
-            setActiveTab('home');
-          }}
-          onSelectItem={handleSelectItem}
-          onQuickAdd={handleQuickAdd}
-        />
-      )}
+        {/* 2. Category / Menu Catalog Screen */}
+        {currentScreen === 'category' && (
+          <CategoryScreen
+            category={activeCategory}
+            sections={sections}
+            selectedSectionId={selectedSectionId}
+            onSelectSection={handleSelectSection}
+            categories={allCategories}
+            selectedCategoryId={selectedCategoryId}
+            onSelectCategory={handleSelectCategory}
+            onBack={() => {
+              setCurrentScreen('home');
+              setActiveTab('home');
+            }}
+            onSelectItem={handleSelectItem}
+            onQuickAdd={handleQuickAdd}
+          />
+        )}
 
-      {/* 3. Item Detail Screen */}
-      {currentScreen === 'item_detail' && selectedItem && (
-        <ItemDetailScreen
-          item={selectedItem}
-          onBack={() => setCurrentScreen('category')}
-          onAddToCart={handleAddToCartFromDetail}
-        />
-      )}
+        {/* 3. Item Detail Screen */}
+        {currentScreen === 'item_detail' && selectedItem && (
+          <ItemDetailScreen
+            item={selectedItem}
+            onBack={() => {
+              if (activeTab === 'home') {
+                setCurrentScreen('home');
+              } else {
+                setCurrentScreen('category');
+              }
+            }}
+            onAddToCart={handleAddToCartFromDetail}
+          />
+        )}
 
-      {/* 4. Cart Screen */}
-      {currentScreen === 'cart' && (
-        <CartScreen
-          onBack={() => {
-            setCurrentScreen('home');
-            setActiveTab('home');
-          }}
-          onProceedToCheckout={handleProceedToCheckout}
-        />
-      )}
+        {/* 4. Cart Screen */}
+        {currentScreen === 'cart' && (
+          <CartScreen
+            onBack={() => {
+              setCurrentScreen('home');
+              setActiveTab('home');
+            }}
+            onProceedToCheckout={handleProceedToCheckout}
+            cafeName={cafeName}
+            tableLocation={tableLocation}
+          />
+        )}
 
-      {/* 5. Customization / Add-ons Screen */}
-      {currentScreen === 'customize' && selectedItem && (
-        <CustomizeScreen
-          item={selectedItem}
-          onBack={() => setCurrentScreen('category')}
-          onConfirm={handleAddToCartFromCustomize}
-        />
-      )}
+        {/* 5. Customization / Add-ons Screen */}
+        {currentScreen === 'customize' && selectedItem && (
+          <CustomizeScreen
+            item={selectedItem}
+            onBack={() => {
+              if (activeTab === 'home') {
+                setCurrentScreen('home');
+              } else {
+                setCurrentScreen('category');
+              }
+            }}
+            onConfirm={handleAddToCartFromCustomize}
+          />
+        )}
 
-      {/* 6. Order Confirmation Screen */}
-      {currentScreen === 'confirmation' && (
-        <OrderConfirmationScreen
-          orderData={activeOrder}
-          onViewOrderDetails={() => setCurrentScreen('tracker')}
-          onBackToHome={() => {
-            setCurrentScreen('home');
-            setActiveTab('home');
-          }}
-        />
-      )}
+        {/* 6. Order Confirmation Screen */}
+        {currentScreen === 'confirmation' && (
+          <OrderConfirmationScreen
+            orderData={activeOrder}
+            onViewOrderDetails={() => setCurrentScreen('tracker')}
+            onBackToHome={() => {
+              setCurrentScreen('home');
+              setActiveTab('home');
+            }}
+          />
+        )}
 
-      {/* Real-time Order Tracker Screen */}
-      {currentScreen === 'tracker' && activeOrder && (
-        <OrderTrackerView
-          orderData={activeOrder}
-          onBackToMenu={() => {
-            setCurrentScreen('home');
-            setActiveTab('home');
-          }}
-          onOrderCancelled={() => {
-            setActiveOrder(null);
-            setCurrentScreen('home');
-            setActiveTab('home');
-          }}
-        />
-      )}
+        {/* Real-time Order Tracker Screen */}
+        {currentScreen === 'tracker' && activeOrder && (
+          <OrderTrackerView
+            orderData={activeOrder}
+            onBackToMenu={() => {
+              setCurrentScreen('home');
+              setActiveTab('home');
+            }}
+            onOrderCancelled={() => {
+              setActiveOrder(null);
+              setCurrentScreen('home');
+              setActiveTab('home');
+            }}
+          />
+        )}
 
-      {/* Persistent Retro Bottom Navigation Bar */}
-      {showBottomNav && (
-        <BottomNav
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          cartCount={calculation.total_items_count}
-        />
-      )}
+        {/* Persistent Floating Bottom Navigation Bar */}
+        {showBottomNav && (
+          <BottomNav
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            cartCount={calculation.total_items_count}
+          />
+        )}
+      </div>
     </div>
   );
 };

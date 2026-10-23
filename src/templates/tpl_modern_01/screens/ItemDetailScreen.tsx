@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Heart, Plus, Minus, Check } from 'lucide-react';
+import { ArrowLeft, Heart, Plus, Minus, Check, Flame, Clock, Star } from 'lucide-react';
 import type { MenuItem, MenuItemAddon } from '../../../core/types/menu.types';
 import type { SelectedAddon } from '../../../core/types/order.types';
 import { useCart } from '../../../core/hooks/useCart';
@@ -11,6 +11,15 @@ export interface ItemDetailScreenProps {
   onAddToCart: (item: MenuItem, selectedAddons: SelectedAddon[], quantity: number) => void;
 }
 
+const defaultIngredients = [
+  { name: 'Beef', icon: '🥩' },
+  { name: 'Cheese', icon: '🧀' },
+  { name: 'Onion', icon: '🧅' },
+  { name: 'Tomato', icon: '🍅' },
+  { name: 'Greens', icon: '🥬' },
+  { name: 'Egg', icon: '🥚' },
+];
+
 export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
   item,
   onBack,
@@ -21,7 +30,7 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
   const [quantity, setQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
 
-  // Extract addons from MongoDB item document structure (supporting options or addons array)
+  // Extract addons dynamically from MongoDB item document structure
   const firstAddonGroup = item.addon_groups?.[0];
   const availableAddons: MenuItemAddon[] =
     firstAddonGroup?.options || firstAddonGroup?.addons || [];
@@ -51,24 +60,21 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
     onAddToCart(item, selectedAddons, quantity);
   };
 
-  return (
-    <div className="min-h-screen bg-[#1C1917] text-[#1C1917] font-sans max-w-md mx-auto flex flex-col justify-between">
-      {/* Top Hero Image Area */}
-      <div className="relative h-72 w-full bg-[#1C1917] overflow-hidden">
-        <img
-          src={item.images?.[0]?.url || getFoodImageFallback(item.name)}
-          alt={item.name}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
-          }}
-          className="w-full h-full object-cover brightness-95"
-        />
+  const imageUrl = item.images?.[0]?.url || getFoodImageFallback(item.name);
+  const subLabel =
+    item.short_name ||
+    item.tags?.[0] ||
+    (item.diet_type === 'VEG' ? 'Pure Vegetarian' : 'Chef Special');
 
-        {/* Top Controls Overlay with 3D button depth */}
-        <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
+  return (
+    <div className="min-h-screen bg-[#FAF4EE] text-stone-900 font-sans flex flex-col justify-between selection:bg-[#FF385C]/20 selection:text-[#FF385C]">
+      {/* Top Hero Gradient Area (Matching mockup Screen 2) */}
+      <div className="relative bg-gradient-to-b from-[#FF5238] via-[#FF693C] to-[#FFA048] pt-4 pb-12 px-5 rounded-b-[40px] shadow-sm">
+        {/* Top Navigation Row: Circular White Back and Heart Buttons */}
+        <div className="flex items-center justify-between mb-2">
           <button
             onClick={onBack}
-            className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:scale-105 active:scale-95 transition"
+            className="w-11 h-11 rounded-full bg-white text-stone-800 shadow-md flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
             aria-label="Back"
           >
             <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
@@ -76,109 +82,180 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
 
           <button
             onClick={() => setIsFavorite(!isFavorite)}
-            className="w-9 h-9 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.5)] hover:scale-105 active:scale-95 transition"
+            className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
             aria-label="Favorite"
           >
-            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+            <Heart
+              className={`w-5 h-5 transition-transform active:scale-125 ${
+                isFavorite
+                  ? 'fill-[#FF385C] text-[#FF385C]'
+                  : 'text-[#FF385C] stroke-[2]'
+              }`}
+            />
           </button>
         </div>
 
-        {/* Carousel Dots */}
-        <div className="absolute bottom-3 left-0 right-0 flex justify-center space-x-1.5 z-10">
-          <div className="w-1.5 h-1.5 rounded-full bg-white shadow-xs" />
-          <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
-          <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+        {/* Large Food Image Centered in Hero Banner with Rounded Border Radius */}
+        <div className="w-full h-56 sm:h-64 flex items-center justify-center py-2">
+          <div className="w-52 h-52 sm:w-60 sm:h-60 rounded-[32px] overflow-hidden shadow-2xl border-4 border-white/70 bg-white/20 backdrop-blur-xs flex items-center justify-center p-1">
+            <img
+              src={imageUrl}
+              alt={item.name}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
+              }}
+              className="w-full h-full object-cover rounded-[24px] hover:scale-105 transition-transform duration-300"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Bottom Sheet Card Container with 3D Upper Glow & Shadow */}
-      <div className="bg-[#F7EFE3] rounded-t-3xl p-6 flex-1 -mt-4 relative z-20 flex flex-col justify-between shadow-[0_-15px_45px_rgba(0,0,0,0.35),0_-1px_3px_rgba(255,255,255,0.7)] border-t border-[#FAF4EC]">
-        <div className="space-y-4">
-          {/* Title and Price Row */}
-          <div className="flex items-start justify-between">
-            <h1 className="font-serif font-black text-xl text-[#1C1917] leading-tight max-w-[240px] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
-              {item.name}
-            </h1>
-            <span className="font-serif font-black text-lg text-[#1C1917]">
-              {formatCurrency(item.base_price_paise)}
+      {/* Overlapping White Bottom Sheet Card */}
+      <div className="bg-white rounded-t-[36px] -mt-8 relative z-10 px-6 pt-7 pb-6 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] flex-1 flex flex-col justify-between">
+        <div className="space-y-5">
+          {/* Title Row with Stepper on the Right */}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="font-black text-2xl sm:text-3xl text-stone-900 leading-tight tracking-tight">
+                {item.name}
+              </h1>
+              <p className="text-sm sm:text-base text-stone-400 font-semibold mt-1">
+                {subLabel}
+              </p>
+            </div>
+
+            {/* Stepper Pill [ - 03 + ] */}
+            <div className="flex items-center space-x-3 bg-red-50/70 border border-red-200/70 rounded-full px-3.5 py-1.5 shrink-0">
+              <button
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[#FF385C] hover:bg-white active:scale-90 transition"
+                aria-label="Decrease quantity"
+              >
+                <Minus className="w-4 h-4 stroke-[2.5]" />
+              </button>
+              <span className="font-black text-sm sm:text-base text-[#FF385C] min-w-[20px] text-center">
+                {String(quantity).padStart(2, '0')}
+              </span>
+              <button
+                onClick={() => setQuantity((q) => q + 1)}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[#FF385C] hover:bg-white active:scale-90 transition"
+                aria-label="Increase quantity"
+              >
+                <Plus className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Row (Rating, Calories, Prep Time) */}
+          <div className="flex items-center space-x-3 pt-1">
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-stone-800 bg-stone-50 border border-stone-200/60 px-3.5 py-1.5 rounded-full">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <span>4.9</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-stone-800 bg-stone-50 border border-stone-200/60 px-3.5 py-1.5 rounded-full">
+              <Flame className="w-4 h-4 text-[#FF385C]" />
+              <span>150 Kcal</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-stone-800 bg-stone-50 border border-stone-200/60 px-3.5 py-1.5 rounded-full">
+              <Clock className="w-4 h-4 text-stone-500" />
+              <span>20-30 Min</span>
+            </div>
+          </div>
+
+          {/* Ingredients Section */}
+          <div className="pt-2">
+            <h3 className="font-black text-base sm:text-lg text-stone-900 mb-3 tracking-tight">
+              Ingredients
+            </h3>
+            <div className="flex items-center space-x-3 overflow-x-auto no-scrollbar py-0.5">
+              {defaultIngredients.map((ing) => (
+                <div
+                  key={ing.name}
+                  className="w-13 h-13 rounded-2xl bg-[#FAF4EE] border border-stone-200/60 flex items-center justify-center text-2xl shadow-2xs hover:scale-105 transition-transform shrink-0"
+                  title={ing.name}
+                >
+                  <span>{ing.icon}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Description Section */}
+          <div className="pt-2">
+            <h3 className="font-black text-base sm:text-lg text-stone-900 mb-2 tracking-tight">
+              Description
+            </h3>
+            <p className="text-sm sm:text-base text-stone-600 leading-relaxed font-normal">
+              {item.description ||
+                'Crafted using 100% premium quality ingredients with delicious signature sauce, fresh crisp vegetables, secret spices, and toasted artisan buns for an unforgettable dining experience!'}
+            </p>
+          </div>
+
+          {/* Optional Add-ons / Customizations */}
+          {availableAddons.length > 0 && (
+            <div className="pt-3 border-t border-stone-100">
+              <h3 className="font-black text-base sm:text-lg text-stone-900 mb-2.5 tracking-tight">
+                Add-ons & Extras
+              </h3>
+              <div className="space-y-2.5">
+                {availableAddons.map((addon) => {
+                  const isChecked = selectedAddons.some((a) => a.id === addon.id);
+                  return (
+                    <div
+                      key={addon.id}
+                      onClick={() => handleToggleAddon(addon)}
+                      className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer ${
+                        isChecked
+                          ? 'border-[#FF385C] bg-red-50/40 text-stone-900'
+                          : 'border-stone-200/70 bg-[#FAF4EE]/50 hover:bg-[#FAF4EE] text-stone-800'
+                      }`}
+                    >
+                      <span className="text-sm font-bold">{addon.name}</span>
+                      <div className="flex items-center space-x-2.5">
+                        <span className="text-sm font-extrabold text-stone-700">
+                          +{formatCurrency(addon.price_paise)}
+                        </span>
+                        <div
+                          className={`w-5 h-5 rounded-lg flex items-center justify-center transition-all ${
+                            isChecked
+                              ? 'bg-[#FF385C] text-white'
+                              : 'border border-stone-300 bg-white'
+                          }`}
+                        >
+                          {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sticky Bottom Bar: Total Price + Add to Cart Button */}
+        <div className="pt-5 mt-5 border-t border-stone-100 flex items-center justify-between gap-4">
+          <div>
+            <span className="block text-xs font-semibold text-stone-400 uppercase tracking-wider">
+              Total Price
+            </span>
+            <span className="font-black text-2xl sm:text-3xl text-stone-900 tracking-tight">
+              {formatCurrency(grandTotalPaise)}
             </span>
           </div>
 
-          {/* Description */}
-          <p className="text-xs text-[#7E756B] leading-relaxed">
-            {item.description || 'Juicy patty, fresh lettuce, tomato, onion, special sauce.'}
-          </p>
-
-          {/* Customize Section */}
-          <div className="pt-2 border-t border-[#E8DDCF]">
-            <div className="flex items-baseline space-x-1 mb-2.5">
-              <h3 className="font-serif font-bold text-sm text-[#1C1917]">Customize</h3>
-              <span className="text-[11px] text-[#7E756B]">(Optional)</span>
-            </div>
-
-            <div className="space-y-2.5">
-              {availableAddons.map((addon) => {
-                const isChecked = selectedAddons.some((a) => a.id === addon.id);
-                return (
-                  <div
-                    key={addon.id}
-                    onClick={() => handleToggleAddon(addon)}
-                    className="flex items-center justify-between text-xs cursor-pointer select-none py-1.5 px-2 rounded-xl hover:bg-[#EFE5D8]/50 transition"
-                  >
-                    <span className="text-[#1C1917] font-medium">{addon.name}</span>
-                    <div className="flex items-center space-x-3">
-                      <span className="text-[#7E756B]">+{formatCurrency(addon.price_paise)}</span>
-                      {/* 3D Checkbox */}
-                      <div
-                        className={`w-4 h-4 rounded-xs border flex items-center justify-center transition-all ${
-                          isChecked
-                            ? 'bg-[#1C1917] border-[#1C1917] text-white shadow-[0_2px_5px_rgba(28,25,23,0.35)]'
-                            : 'border-[#1C1917]/40 bg-[#FAF4EC] shadow-[inset_0_1px_2px_rgba(0,0,0,0.08)]'
-                        }`}
-                      >
-                        {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Quantity & Add to Cart Footer */}
-        <div className="pt-5 border-t border-[#E8DDCF] space-y-4">
-          {/* Quantity Stepper Row */}
-          <div className="flex items-center justify-between">
-            <span className="font-serif font-bold text-sm text-[#1C1917]">Quantity</span>
-            <div className="flex items-center space-x-3 bg-[#EFE5D8] rounded-xl px-3 py-1.5 border border-[#E2D5C3] shadow-[inset_0_2px_4px_rgba(28,25,23,0.06),0_1px_2px_rgba(255,255,255,0.8)]">
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="text-[#1C1917] hover:opacity-70 active:scale-90 p-0.5"
-                aria-label="Decrease"
-              >
-                <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
-              </button>
-              <span className="font-bold text-xs text-[#1C1917] w-4 text-center">{quantity}</span>
-              <button
-                onClick={() => setQuantity((q) => q + 1)}
-                className="text-[#1C1917] hover:opacity-70 active:scale-90 p-0.5"
-                aria-label="Increase"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              </button>
-            </div>
-          </div>
-
-          {/* Black Full-Width 3D CTA Button */}
           <button
             onClick={handleAdd}
-            className="w-full py-4 px-5 bg-[#1C1917] text-[#F7EFE3] font-bold text-xs rounded-2xl shadow-[0_10px_24px_-4px_rgba(28,25,23,0.4),0_4px_8px_-2px_rgba(28,25,23,0.2),inset_0_1px_1px_rgba(255,255,255,0.25)] hover:shadow-[0_14px_28px_-4px_rgba(28,25,23,0.5)] active:scale-98 transition flex items-center justify-center space-x-2"
+            className="flex-1 max-w-[210px] sm:max-w-[250px] py-4 px-6 bg-[#FF385C] hover:bg-[#E0294C] text-white font-extrabold text-base rounded-2xl shadow-lg shadow-red-500/25 active:scale-95 transition-all flex items-center justify-center"
           >
-            <span>Add to Cart • {formatCurrency(grandTotalPaise)}</span>
+            Add to Cart
           </button>
         </div>
       </div>
     </div>
   );
 };
+
+export default ItemDetailScreen;

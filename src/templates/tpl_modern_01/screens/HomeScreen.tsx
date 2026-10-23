@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ShoppingBag, MapPin, ChevronDown, ArrowRight, Plus, Utensils, Sparkles } from 'lucide-react';
+import { Search, ChevronDown, Heart, Plus, X, Info, MapPin, Phone, ShieldCheck, Clock, Store } from 'lucide-react';
 import type { MenuItem, MenuCategory, MenuSection, MongoMenuDocument } from '../../../core/types/menu.types';
 import type { QRBoothContext } from '../../../core/types/order.types';
 import { useCart } from '../../../core/hooks/useCart';
@@ -40,303 +40,222 @@ const getCategoryIcon = (catName: string, catId: string): string => {
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   menu,
-  sections,
-  selectedSectionId,
-  onSelectSection,
-  categories,
   allCategories,
-  popularItems,
   booth,
   searchQuery,
   onSearchChange,
-  onSelectCategory,
   onSelectItem,
-  onOpenCart,
   onOpenMenu,
-  cartCount,
 }) => {
-  const { formatCurrency } = useCart();
+  const { addItem, formatCurrency } = useCart();
   const [logoError, setLogoError] = useState(false);
+  const [selectedCatId, setSelectedCatId] = useState<string>('all');
+  const [favorites, setFavorites] = useState<Record<string, boolean>>({});
+  const [showSearchInput, setShowSearchInput] = useState<boolean>(false);
+  const [showVendorModal, setShowVendorModal] = useState<boolean>(false);
 
   // Dynamic Cafe Profile
   const cafeName = menu?.cafe_profile?.name || booth?.vendor_name || 'Qizine Dining';
-  const brandTagline = menu?.cafe_profile?.tagline || 'Good Food. Better Moods.';
   const tableLocation = booth
     ? `${booth.booth_label}${booth.zone ? ` • ${booth.zone}` : ''}`
-    : (menu?.cafe_profile?.address || 'Table 04 • Indoor Dining');
+    : (menu?.cafe_profile?.address || 'Table T-1 • Main Dining Hall');
 
-  // Active or Featured Section for Hero Banner
-  const activeSection = useMemo(() => {
-    if (selectedSectionId && selectedSectionId !== 'ALL') {
-      return sections.find((s) => s.id === selectedSectionId) || sections[0];
+  const toggleFavorite = (itemId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFavorites((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
+  };
+
+  const handleQuickAdd = (item: MenuItem, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (item.addon_groups && item.addon_groups.length > 0) {
+      onSelectItem(item);
+    } else {
+      addItem(item);
     }
-    return sections[0];
-  }, [sections, selectedSectionId]);
+  };
 
-  const heroTitle = activeSection?.name || 'Chef Specials';
-  const heroTagline = activeSection?.tagline || 'Handcrafted recipes made with royal spices & fresh ingredients';
-  const heroImage =
-    activeSection?.categories?.[0]?.items?.[0]?.images?.[0]?.url ||
-    popularItems[0]?.images?.[0]?.url ||
-    getFoodImageFallback(heroTitle);
+  // Build unified categories list with "All" first
+  const displayCategories = useMemo(() => {
+    return [
+      { id: 'all', name: 'All', icon: '✨' },
+      ...allCategories.map((c) => ({
+        id: c.id,
+        name: c.name,
+        icon: getCategoryIcon(c.name, c.id),
+      })),
+    ];
+  }, [allCategories]);
 
-  // Search filter results if user is actively searching
+  // Flatten items for active category filter or search
   const isSearching = searchQuery.trim().length > 0;
-  const searchResults: MenuItem[] = useMemo(() => {
-    if (!isSearching) return [];
-    const q = searchQuery.toLowerCase().trim();
-    const all = allCategories.flatMap((c) => c.items);
-    return all.filter(
-      (item) =>
-        item.name.toLowerCase().includes(q) ||
-        (item.short_name && item.short_name.toLowerCase().includes(q)) ||
-        (item.description && item.description.toLowerCase().includes(q)) ||
-        (item.tags && item.tags.some((t) => t.toLowerCase().includes(q)))
-    );
-  }, [allCategories, searchQuery, isSearching]);
+  const filteredItems = useMemo(() => {
+    let items = allCategories.flatMap((c) => c.items);
+    
+    // Deduplicate items by ID if present across categories
+    const seen = new Set<string>();
+    items = items.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+
+    if (isSearching) {
+      const q = searchQuery.toLowerCase().trim();
+      return items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          (item.short_name && item.short_name.toLowerCase().includes(q)) ||
+          (item.description && item.description.toLowerCase().includes(q)) ||
+          (item.tags && item.tags.some((t) => t.toLowerCase().includes(q)))
+      );
+    }
+
+    if (selectedCatId !== 'all') {
+      const activeCat = allCategories.find((c) => c.id === selectedCatId);
+      return activeCat ? activeCat.items : items;
+    }
+
+    return items;
+  }, [allCategories, selectedCatId, searchQuery, isSearching]);
 
   return (
-    <div className="min-h-screen bg-[#F7EFE3] text-[#1C1917] pb-28 font-sans px-5 pt-3 max-w-md mx-auto">
-      {/* iOS Top Status Placeholder */}
-      <div className="flex justify-between items-center text-[11px] font-semibold text-[#1C1917] px-1 mb-3 opacity-90">
-        <span>9:41</span>
-        <div className="flex items-center space-x-1.5">
-          <span className="text-[10px]">●●●</span>
-          <span>WiFi</span>
-          <span>100%</span>
-        </div>
-      </div>
-
-      {/* Top Header Row: Logo & Brand + Cart Icon */}
-      <div className="flex items-start justify-between mb-1">
-        <div className="flex items-center space-x-2.5">
-          {/* Retro 3D Logo Badge */}
-          <div className="w-11 h-11 rounded-2xl bg-[#1C1917] text-[#F7EFE3] flex items-center justify-center font-bold text-2xl shadow-[0_6px_16px_rgba(28,25,23,0.3),inset_0_1px_1px_rgba(255,255,255,0.25)] border border-black/30 overflow-hidden shrink-0">
-            {menu?.cafe_profile?.logo_url && !logoError ? (
-              <img
-                src={menu.cafe_profile.logo_url}
-                alt={cafeName}
-                onError={() => setLogoError(true)}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span>☕</span>
-            )}
-          </div>
-          <div>
-            <h1 className="font-serif font-black text-lg leading-tight tracking-tight text-[#1C1917] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] line-clamp-1">
-              {cafeName}
-            </h1>
-            <p className="text-[11px] text-[#7E756B] font-medium line-clamp-1">
-              {brandTagline}
-            </p>
-          </div>
-        </div>
-
-        {/* Top Right Cart Button with 3D Badge */}
+    <div className="flex-1 bg-[#FAF4EE] text-stone-900 pb-28 font-sans px-4 sm:px-6 pt-5 transition-colors">
+      {/* Top Bar: Cafe Avatar/Logo, Vendor Name & Location, Search Button */}
+      <div className="flex items-center justify-between mb-4">
+        {/* Left: Cafe Avatar / Logo (Clickable to open Vendor details) */}
         <button
-          onClick={onOpenCart}
-          className="relative p-2.5 rounded-full bg-[#FAF4EC] hover:bg-[#EFE5D8] border border-[#E8DDCF] shadow-[0_4px_10px_rgba(28,25,23,0.08),inset_0_1px_1px_rgba(255,255,255,0.9)] text-[#1C1917] transition active:scale-95 shrink-0"
-          aria-label="View Cart"
+          onClick={() => setShowVendorModal(true)}
+          className="relative w-12 h-12 rounded-2xl bg-white border border-stone-200/80 p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+          aria-label="View Restaurant Info"
         >
-          <ShoppingBag className="w-5 h-5 stroke-[2]" />
-          {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-[#1C1917] text-[#F7EFE3] text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-[0_2px_6px_rgba(28,25,23,0.4)] border border-[#F7EFE3]">
-              {cartCount}
-            </span>
+          {menu?.cafe_profile?.logo_url && !logoError ? (
+            <img
+              src={menu.cafe_profile.logo_url}
+              alt={cafeName}
+              onError={() => setLogoError(true)}
+              className="w-full h-full object-cover rounded-xl"
+            />
+          ) : (
+            <span className="text-2xl">🍔</span>
+          )}
+          <span className="absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-white ring-1 ring-emerald-500/20" />
+        </button>
+
+        {/* Center: Vendor Name + Location */}
+        <button
+          onClick={() => setShowVendorModal(true)}
+          className="flex flex-col items-center justify-center text-center cursor-pointer group px-2 max-w-[210px] sm:max-w-[260px]"
+        >
+          <div className="text-base sm:text-lg font-black text-stone-900 tracking-tight group-hover:text-[#FF385C] transition-colors truncate max-w-full">
+            {cafeName}
+          </div>
+          <div className="flex items-center gap-1 text-xs font-semibold text-stone-500 mt-0.5">
+            <span className="text-[#FF385C]">📍</span>
+            <span className="truncate max-w-[160px] sm:max-w-[200px]">{tableLocation}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition" />
+          </div>
+        </button>
+
+        {/* Right: Circular Search Trigger Button */}
+        <button
+          onClick={() => setShowSearchInput(!showSearchInput)}
+          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
+            showSearchInput
+              ? 'bg-[#FF385C] text-white shadow-md shadow-red-500/25'
+              : 'bg-white text-stone-800 border border-stone-200/80 shadow-sm hover:shadow-md active:scale-95'
+          }`}
+          aria-label="Toggle Search"
+        >
+          {showSearchInput ? (
+            <X className="w-5 h-5 stroke-[2.5]" />
+          ) : (
+            <Search className="w-5 h-5 stroke-[2.5]" />
           )}
         </button>
       </div>
 
-      {/* Location / Table Booth Selector */}
-      <div className="flex items-center space-x-1 text-xs text-[#7E756B] mb-3 ml-0.5">
-        <MapPin className="w-3.5 h-3.5 text-[#1C1917]" />
-        <span className="font-semibold text-[#1C1917] line-clamp-1">
-          {tableLocation}
-        </span>
-        <ChevronDown className="w-3.5 h-3.5 text-[#7E756B]" />
-      </div>
-
-      {/* 3D Inset Search Bar */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3.5 top-3 w-4 h-4 text-[#8E8276]" />
-        <input
-          type="text"
-          placeholder="Search items, drinks, snacks..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full bg-[#EFE5D8] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-[#1C1917] placeholder-[#8E8276] focus:outline-none focus:ring-2 focus:ring-[#1C1917]/20 border border-[#E2D5C3] shadow-[inset_0_2px_4px_rgba(28,25,23,0.06),0_1px_2px_rgba(255,255,255,0.8)] transition"
-        />
-        {isSearching && (
-          <button
-            onClick={() => onSearchChange('')}
-            className="absolute right-3 top-2.5 text-xs font-bold text-[#8E8276] hover:text-[#1C1917]"
-          >
-            Clear
-          </button>
-        )}
-      </div>
-
-      {/* SEARCH RESULTS VIEW */}
-      {isSearching && (
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-serif font-black text-sm text-[#1C1917]">
-              Search Results ({searchResults.length})
-            </h3>
-          </div>
-          {searchResults.length === 0 ? (
-            <div className="bg-[#FAF4EC] rounded-2xl p-6 text-center border border-[#E8DDCF]">
-              <p className="text-xs text-[#7E756B]">No dishes or beverages match &ldquo;{searchQuery}&rdquo;</p>
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {searchResults.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => onSelectItem(item)}
-                  className="bg-[#FAF4EC] rounded-2xl p-3 border border-[#E8DDCF] shadow-[0_6px_16px_rgba(28,25,23,0.08)] flex items-center justify-between gap-3 cursor-pointer hover:-translate-y-0.5 transition"
-                >
-                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-[#EFE5D8]">
-                    <img
-                      src={item.images?.[0]?.url || getFoodImageFallback(item.name)}
-                      alt={item.name}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
-                      }}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-serif font-bold text-xs text-[#1C1917] truncate">{item.name}</h4>
-                    <p className="text-[10px] text-[#7E756B] line-clamp-1">{item.description}</p>
-                    <p className="font-serif font-bold text-xs text-[#1C1917] mt-1">{formatCurrency(item.base_price_paise)}</p>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectItem(item);
-                    }}
-                    className="w-7 h-7 rounded-full bg-[#1C1917] text-white flex items-center justify-center shrink-0 shadow-[0_4px_10px_rgba(28,25,23,0.3)] hover:scale-110 active:scale-95 transition"
-                  >
-                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                  </button>
-                </div>
-              ))}
-            </div>
+      {/* Expandable Search Input */}
+      {showSearchInput && (
+        <div className="relative mb-5 animate-in fade-in slide-in-from-top-2 duration-200">
+          <Search className="absolute left-4 top-3.5 w-5 h-5 text-stone-400" />
+          <input
+            type="text"
+            autoFocus
+            placeholder="Search delicious burgers, sides, drinks..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full bg-white rounded-2xl pl-12 pr-12 py-3 text-sm sm:text-base text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#FF385C]/30 border border-stone-200/80 shadow-sm transition"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => onSearchChange('')}
+              className="absolute right-4 top-3 text-xs sm:text-sm font-bold text-stone-400 hover:text-stone-700"
+            >
+              Clear
+            </button>
           )}
         </div>
       )}
 
-      {/* Dynamic Elevated 3D Hero Promo Banner Card */}
+      {/* Promo Banner Card (Exact match to provided design template) */}
       {!isSearching && (
-        <div className="relative bg-[#1C1917] text-white rounded-3xl p-5 mb-5 overflow-hidden shadow-[0_18px_36px_-8px_rgba(28,25,23,0.4),0_6px_12px_-2px_rgba(28,25,23,0.25)] border border-black/30">
-          <div className="flex items-center justify-between">
-            <div className="max-w-[170px]">
-              <span className="inline-flex items-center gap-1 text-[9px] font-bold tracking-wider uppercase text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full mb-1.5 border border-amber-400/20">
-                <Sparkles className="w-2.5 h-2.5" />
-                Featured Menu
-              </span>
-              <h2 className="font-serif font-black text-xl leading-tight tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] line-clamp-2">
-                {heroTitle}
-              </h2>
-              <p className="text-[11px] text-[#C4B5A5] mt-1 line-clamp-2 leading-snug">
-                {heroTagline}
-              </p>
-            </div>
-
-            <div className="relative w-32 h-28 shrink-0 flex items-center justify-center">
-              <img
-                src={heroImage}
-                alt={heroTitle}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = getFoodImageFallback(heroTitle);
-                }}
-                className="w-28 h-26 object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.6)] hover:scale-105 transition-transform"
-              />
-              {/* 3D Arrow Action */}
-              <button
-                onClick={onOpenMenu}
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white text-[#1C1917] flex items-center justify-center shadow-[0_4px_10px_rgba(0,0,0,0.35),0_1px_3px_rgba(255,255,255,0.6)] hover:scale-110 active:scale-95 transition"
-                title="View Full Menu"
-              >
-                <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Dynamic Section / Menu Switcher Tabs */}
-      {!isSearching && sections.length > 0 && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#7E756B]">
-              Menus & Sections
-            </span>
+        <div className="relative bg-[#FEE8DC] rounded-3xl p-5 sm:p-6 mb-6 overflow-hidden shadow-sm flex items-center justify-between border border-[#FCD8C4]/70">
+          <div className="max-w-[170px] sm:max-w-[210px] z-10">
+            <h2 className="font-black text-xl sm:text-2xl text-stone-900 leading-tight tracking-tight">
+              Free Home
+            </h2>
+            <h3 className="font-black text-xl sm:text-2xl text-[#FF385C] leading-tight tracking-tight mb-3.5">
+              Delivery Service
+            </h3>
             <button
               onClick={onOpenMenu}
-              className="text-xs font-bold text-[#1C1917] hover:underline flex items-center gap-0.5"
+              className="bg-[#FF385C] hover:bg-[#E0294C] text-white text-xs sm:text-sm font-extrabold px-5 py-2.5 rounded-2xl shadow-md shadow-red-500/25 active:scale-95 transition-all inline-flex items-center gap-1.5"
             >
-              <span>Full Menu</span>
-              <ArrowRight className="w-3 h-3" />
+              Order Now
             </button>
           </div>
 
-          <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar py-1">
-            <button
-              onClick={() => onSelectSection('ALL')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold tracking-tight whitespace-nowrap transition-all transform active:scale-95 ${
-                selectedSectionId === 'ALL'
-                  ? 'bg-[#1C1917] text-[#F7EFE3] shadow-[0_4px_12px_rgba(28,25,23,0.3)] border border-black/30'
-                  : 'bg-[#FAF4EC] text-[#1C1917] hover:bg-[#EFE5D8] border border-[#E8DDCF] shadow-[0_2px_6px_rgba(142,130,118,0.15)]'
-              }`}
-            >
-              ✨ All Menus ({allCategories.length})
-            </button>
-
-            {sections.map((sec) => {
-              const isSelected = selectedSectionId === sec.id;
-              return (
-                <button
-                  key={sec.id}
-                  onClick={() => onSelectSection(sec.id)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold tracking-tight whitespace-nowrap transition-all transform active:scale-95 ${
-                    isSelected
-                      ? 'bg-[#1C1917] text-[#F7EFE3] shadow-[0_4px_12px_rgba(28,25,23,0.3)] border border-black/30'
-                      : 'bg-[#FAF4EC] text-[#1C1917] hover:bg-[#EFE5D8] border border-[#E8DDCF] shadow-[0_2px_6px_rgba(142,130,118,0.15)]'
-                  }`}
-                >
-                  📁 {sec.name} ({sec.categories.length})
-                </button>
-              );
-            })}
+          {/* Right Image Graphic */}
+          <div className="relative w-32 h-28 sm:w-40 sm:h-34 shrink-0 flex items-center justify-end">
+            <img
+              src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80"
+              alt="Delicious Burger Delivery"
+              className="w-28 h-28 sm:w-36 sm:h-34 object-cover rounded-2xl drop-shadow-xl hover:scale-105 transition-transform duration-300"
+            />
           </div>
         </div>
       )}
 
-      {/* Dynamic Elevated 3D Category Circular Avatars Row */}
+      {/* Horizontal Category Cards (Active = Red pill, Inactive = White pill) */}
       {!isSearching && (
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-2.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#7E756B]">
-              Categories ({categories.length})
-            </span>
-          </div>
-
-          <div className="grid grid-cols-4 gap-3">
-            {categories.map((cat) => {
-              const icon = getCategoryIcon(cat.name, cat.id);
+          <div className="flex items-center space-x-3.5 overflow-x-auto no-scrollbar py-1 px-0.5">
+            {displayCategories.map((cat) => {
+              const isSelected = selectedCatId === cat.id;
               return (
                 <button
                   key={cat.id}
-                  onClick={() => onSelectCategory(cat.id)}
-                  className="flex flex-col items-center group transition transform active:scale-95 text-center"
+                  onClick={() => setSelectedCatId(cat.id)}
+                  className={`flex flex-col items-center justify-between min-w-[84px] px-3.5 py-3.5 rounded-2xl transition-all duration-200 transform active:scale-95 cursor-pointer shrink-0 ${
+                    isSelected
+                      ? 'bg-[#FF385C] text-white shadow-lg shadow-red-500/25 scale-[1.02]'
+                      : 'bg-white text-stone-700 border border-stone-200/60 shadow-sm hover:shadow-md'
+                  }`}
                 >
-                  <div className="w-14 h-14 rounded-2xl bg-[#EFE5D8] group-hover:bg-[#E5DACD] border border-[#E0D2C0] flex items-center justify-center text-2xl shadow-[0_8px_18px_-3px_rgba(142,130,118,0.3),0_2px_6px_rgba(0,0,0,0.04),inset_0_1px_2px_rgba(255,255,255,0.9)] mb-1.5 transition-all group-hover:shadow-[0_10px_22px_-2px_rgba(142,130,118,0.4)]">
-                    <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.1)]">{icon}</span>
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all ${
+                      isSelected
+                        ? 'bg-white text-stone-900 shadow-sm'
+                        : 'bg-[#FAF4EE] text-stone-800'
+                    }`}
+                  >
+                    <span>{cat.icon}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-[#1C1917] tracking-tight drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)] line-clamp-2 leading-tight">
+                  <span
+                    className={`text-xs sm:text-sm font-extrabold mt-2 text-center whitespace-nowrap px-1 ${
+                      isSelected ? 'text-white' : 'text-stone-800'
+                    }`}
+                  >
                     {cat.name}
                   </span>
                 </button>
@@ -346,74 +265,291 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       )}
 
-      {/* Popular Picks Section */}
-      {!isSearching && (
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-serif font-black text-base tracking-tight text-[#1C1917] drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
-              Popular Picks
-            </h3>
+      {/* Food Products Grid (2 Columns, matching mockup) */}
+      <div>
+        <div className="flex items-center justify-between mb-3.5 px-0.5">
+          <h3 className="font-black text-lg sm:text-xl text-stone-900 tracking-tight">
+            {isSearching
+              ? `Results for "${searchQuery}" (${filteredItems.length})`
+              : selectedCatId === 'all'
+              ? 'Popular Food Menu'
+              : displayCategories.find((c) => c.id === selectedCatId)?.name || 'Food Menu'}
+          </h3>
+          {!isSearching && (
             <button
               onClick={onOpenMenu}
-              className="text-xs font-bold text-[#7E756B] hover:text-[#1C1917] transition flex items-center space-x-0.5"
+              className="text-xs sm:text-sm font-bold text-[#FF385C] hover:underline"
             >
-              <span>View all</span>
-              <span>&rarr;</span>
+              See all
             </button>
-          </div>
+          )}
+        </div>
 
-          {/* Elevated 3D Popular Pick Cards */}
-          <div className="grid grid-cols-2 gap-3.5">
-            {popularItems.slice(0, 4).map((item) => (
-              <div
-                key={item.id}
-                onClick={() => onSelectItem(item)}
-                className="bg-[#FAF4EC] rounded-2xl p-3 border border-[#E8DDCF] shadow-[0_10px_22px_-4px_rgba(28,25,23,0.12),0_3px_8px_-2px_rgba(28,25,23,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)] cursor-pointer hover:-translate-y-1 hover:shadow-[0_16px_28px_-4px_rgba(28,25,23,0.18)] transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="w-full h-24 rounded-xl overflow-hidden mb-2 bg-[#EFE5D8] shadow-[0_3px_8px_rgba(0,0,0,0.06)] relative">
+        {filteredItems.length === 0 ? (
+          <div className="bg-white rounded-3xl p-8 text-center border border-stone-200/70 shadow-sm">
+            <span className="text-4xl mb-2 inline-block">🔍</span>
+            <p className="text-base font-extrabold text-stone-800">No items found</p>
+            <p className="text-xs sm:text-sm text-stone-400 mt-1">
+              Try searching with another keyword or explore all categories.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3.5 sm:gap-4.5">
+            {filteredItems.map((item) => {
+              const isFav = !!favorites[item.id];
+              const imageUrl =
+                item.images?.[0]?.url || getFoodImageFallback(item.name);
+              const subLabel =
+                item.short_name ||
+                item.tags?.[0] ||
+                (item.diet_type === 'VEG' ? 'Vegetarian' : 'Chef Special');
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => onSelectItem(item)}
+                  className="bg-white rounded-3xl p-3.5 sm:p-4 border border-stone-200/60 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between cursor-pointer group active:scale-[0.98]"
+                >
+                  {/* Top Row: Rating Badge & Heart Favorite Button */}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1 text-xs font-bold text-stone-800 bg-stone-50 px-2 py-0.5 rounded-full">
+                      <span className="text-amber-500">★</span>
+                      <span>4.9</span>
+                    </div>
+
+                    <button
+                      onClick={(e) => toggleFavorite(item.id, e)}
+                      className="p-1 rounded-full text-stone-400 hover:text-[#FF385C] transition-colors"
+                      aria-label="Add to favorites"
+                    >
+                      <Heart
+                        className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform active:scale-125 ${
+                          isFav
+                            ? 'fill-[#FF385C] text-[#FF385C]'
+                            : 'text-stone-300 stroke-[2]'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Centered Food Image with Rounded Border Radius */}
+                  <div className="w-full h-28 sm:h-34 rounded-2xl overflow-hidden bg-stone-50 border border-stone-100 flex items-center justify-center my-1.5 p-1 shadow-2xs">
                     <img
-                      src={item.images?.[0]?.url || getFoodImageFallback(item.name)}
+                      src={imageUrl}
                       alt={item.name}
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
+                        (e.target as HTMLImageElement).src =
+                          getFoodImageFallback(item.name);
                       }}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
                     />
-                    {/* Diet flag badge */}
-                    <div className="absolute top-1.5 left-1.5 bg-white/90 backdrop-blur-xs p-1 rounded-sm shadow-xs border border-black/10">
-                      <div className={`w-2 h-2 rounded-full ${item.diet_type === 'VEG' ? 'bg-emerald-600' : 'bg-red-600'}`} />
-                    </div>
                   </div>
-                  <h4 className="font-serif font-bold text-xs text-[#1C1917] leading-snug line-clamp-1">
-                    {item.name}
-                  </h4>
-                  <p className="text-[10px] text-[#7E756B] line-clamp-1 mt-0.5">
-                    {item.description}
-                  </p>
-                </div>
 
-                <div className="flex items-center justify-between mt-2 pt-1 border-t border-[#E8DDCF]/60">
-                  <span className="font-serif font-bold text-xs text-[#1C1917]">
-                    {formatCurrency(item.base_price_paise)}
-                  </span>
-                  {/* 3D Round + Action */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectItem(item);
-                    }}
-                    className="w-7 h-7 rounded-full bg-[#1C1917] text-white flex items-center justify-center shadow-[0_4px_10px_rgba(28,25,23,0.35),inset_0_1px_1px_rgba(255,255,255,0.2)] hover:scale-110 active:scale-95 active:shadow-[0_2px_4px_rgba(28,25,23,0.3)] transition"
-                    aria-label="Add item"
-                  >
-                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                  </button>
+                  {/* Food Name & Subtitle */}
+                  <div className="mt-1 flex-1 flex flex-col justify-between">
+                    <h4 className="font-extrabold text-sm sm:text-base text-stone-900 leading-snug line-clamp-2 min-h-[2.4rem] flex items-center">
+                      {item.name}
+                    </h4>
+                    <p className="text-xs text-stone-400 font-medium truncate mt-0.5">
+                      {subLabel}
+                    </p>
+                  </div>
+
+                  {/* Price & Red Circular Plus Button */}
+                  <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-stone-100">
+                    <span className="font-black text-sm sm:text-base text-stone-900">
+                      {formatCurrency(item.base_price_paise)}
+                    </span>
+
+                    <button
+                      onClick={(e) => handleQuickAdd(item, e)}
+                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FF385C] hover:bg-[#E0294C] text-white flex items-center justify-center shadow-md shadow-red-500/25 hover:scale-110 active:scale-95 transition-all"
+                      aria-label="Add item"
+                    >
+                      <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {/* Restaurant Compliance & Info Footer */}
+        <div className="mt-10 pt-6 border-t border-stone-200/80 text-center space-y-2 pb-6">
+          <div className="flex items-center justify-center gap-2 text-xs font-bold text-stone-700">
+            <Store className="w-3.5 h-3.5 text-[#FF385C]" />
+            <span>{cafeName}</span>
+          </div>
+          {menu?.cafe_profile?.tagline && (
+            <p className="text-[11px] text-stone-500 italic max-w-xs mx-auto">
+              "{menu.cafe_profile.tagline}"
+            </p>
+          )}
+          {menu?.cafe_profile?.address && (
+            <p className="text-[11px] text-stone-500 max-w-xs mx-auto flex items-center justify-center gap-1">
+              <MapPin className="w-3 h-3 text-stone-400 shrink-0" />
+              <span>{menu.cafe_profile.address}</span>
+            </p>
+          )}
+          {menu?.cafe_profile?.fssai_lic_no && (
+            <div className="inline-flex items-center gap-1.5 bg-white border border-stone-200/80 rounded-full px-3 py-1 shadow-2xs text-[10px] text-stone-600 font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>FSSAI Lic. No. <strong>{menu.cafe_profile.fssai_lic_no}</strong></span>
+            </div>
+          )}
+          <p className="text-[10px] text-stone-400 pt-2">
+            Powered by <span className="font-bold text-stone-600">Qizine</span> • Digital Dining Experience
+          </p>
+        </div>
+      </div>
+
+      {/* Vendor Details & Regulatory Sheet / Modal */}
+      {showVendorModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200"
+          onClick={() => setShowVendorModal(false)}
+        >
+          <div
+            className="w-full sm:max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-stone-200/80 animate-in slide-in-from-bottom-6 duration-300 max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header Banner */}
+            <div className="relative h-32 sm:h-36 bg-gradient-to-br from-[#FF512F] via-[#FF385C] to-[#DD2476] p-4 flex items-start justify-between text-white shrink-0">
+              {menu?.cafe_profile?.cover_url && (
+                <img
+                  src={menu.cafe_profile.cover_url}
+                  alt={cafeName}
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-50"
+                />
+              )}
+              <div className="z-10">
+                <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider border border-white/20">
+                  Restaurant Profile
+                </span>
+              </div>
+              <button
+                onClick={() => setShowVendorModal(false)}
+                className="z-10 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition active:scale-95"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5 stroke-[2.5]" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 sm:p-6 overflow-y-auto no-scrollbar space-y-5 -mt-10 z-20">
+              {/* Logo + Name Header */}
+              <div className="flex items-end gap-3.5">
+                <div className="w-20 h-20 rounded-2xl bg-white border-2 border-white shadow-xl p-1.5 shrink-0 overflow-hidden flex items-center justify-center">
+                  {menu?.cafe_profile?.logo_url && !logoError ? (
+                    <img
+                      src={menu.cafe_profile.logo_url}
+                      alt={cafeName}
+                      className="w-full h-full object-cover rounded-xl"
+                    />
+                  ) : (
+                    <span className="text-3xl">🍔</span>
+                  )}
+                </div>
+                <div className="flex-1 pb-1">
+                  <h3 className="font-black text-xl text-stone-900 leading-tight">
+                    {cafeName}
+                  </h3>
+                  {menu?.cafe_profile?.tagline && (
+                    <p className="text-xs text-stone-500 font-medium mt-0.5">
+                      {menu.cafe_profile.tagline}
+                    </p>
+                  )}
                 </div>
               </div>
-            ))}
+
+              {/* Status & Dining Badges */}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-[#FAF4EE] rounded-2xl p-3 border border-stone-200/60 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">Status</p>
+                    <p className="text-xs font-black text-emerald-700">Kitchen Active</p>
+                  </div>
+                </div>
+
+                <div className="bg-[#FAF4EE] rounded-2xl p-3 border border-stone-200/60 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-red-100 text-[#FF385C] flex items-center justify-center shrink-0">
+                    <MapPin className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">Your Table</p>
+                    <p className="text-xs font-black text-stone-900 truncate">{tableLocation}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Details List */}
+              <div className="bg-stone-50/80 rounded-2xl p-4 border border-stone-200/60 space-y-3">
+                {/* Physical Address */}
+                {menu?.cafe_profile?.address && (
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-stone-800">Address</p>
+                      <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
+                        {menu.cafe_profile.address}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Phone Contact */}
+                {menu?.cafe_profile?.phone && (
+                  <div className="flex items-center gap-3 pt-2 border-t border-stone-200/60">
+                    <Phone className="w-4 h-4 text-stone-400 shrink-0" />
+                    <div className="flex-1 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold text-stone-800">Contact Helpdesk</p>
+                        <p className="text-xs text-stone-500">{menu.cafe_profile.phone}</p>
+                      </div>
+                      <a
+                        href={`tel:${menu.cafe_profile.phone}`}
+                        className="bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold px-3 py-1.5 rounded-xl border border-stone-200 shadow-2xs"
+                      >
+                        Call
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* FSSAI License */}
+                {menu?.cafe_profile?.fssai_lic_no && (
+                  <div className="flex items-start gap-3 pt-2 border-t border-stone-200/60">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-bold text-stone-800">Food Safety & Quality</p>
+                      <p className="text-xs text-stone-600 font-mono mt-0.5">
+                        FSSAI License: <strong>{menu.cafe_profile.fssai_lic_no}</strong>
+                      </p>
+                      <p className="text-[10px] text-stone-400 mt-0.5">
+                        Certified hygienic preparation under government food standards
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Button */}
+              <button
+                onClick={() => setShowVendorModal(false)}
+                className="w-full bg-[#FF385C] hover:bg-[#E0294C] text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg shadow-red-500/25 active:scale-98 transition-all"
+              >
+                Back to Menu
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
 };
+
+export default HomeScreen;
