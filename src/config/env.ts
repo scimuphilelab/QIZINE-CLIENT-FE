@@ -4,9 +4,18 @@
  */
 
 export const ENV = {
-  APP_BASE_URL: (import.meta.env.VITE_APP_BASE_URL as string) || (import.meta.env.APP_BASE_URL as string) || 'http://localhost:3001',
-  ADMIN_BASE_URL: (import.meta.env.VITE_ADMIN_BASE_URL as string) || (import.meta.env.ADMIN_BASE_URL as string) || 'http://localhost:5173',
-  API_BASE_URL: (import.meta.env.VITE_API_BASE_URL as string) || (import.meta.env.API_BASE_URL as string) || 'http://localhost:8080/v1',
+  APP_BASE_URL:
+    (import.meta.env.VITE_APP_BASE_URL as string) ||
+    (import.meta.env.APP_BASE_URL as string) ||
+    (typeof window !== 'undefined' ? window.location.origin : 'https://qizine-client-fe.pages.dev'),
+  ADMIN_BASE_URL:
+    (import.meta.env.VITE_ADMIN_BASE_URL as string) ||
+    (import.meta.env.ADMIN_BASE_URL as string) ||
+    'https://qizine-admin-fe.pages.dev',
+  API_BASE_URL:
+    (import.meta.env.VITE_API_BASE_URL as string) ||
+    (import.meta.env.API_BASE_URL as string) ||
+    'https://qr-ordering-service-be.onrender.com/v1',
   HEADER_SECRET: (import.meta.env.VITE_HEADER_SECRET as string) || (import.meta.env.HEADER_SECRET as string) || 'qz_sec_live_9b83f0e1d4c7a5268394e1b7f205c6d83a19e2f4705c1d84b2e6a9f0375c81d2',
   ENABLE_MOCK_FALLBACK: (import.meta.env.VITE_ENABLE_MOCK_FALLBACK as string) !== 'false',
   VAPID_PUBLIC_KEY: (import.meta.env.VITE_VAPID_PUBLIC_KEY as string) || '',
