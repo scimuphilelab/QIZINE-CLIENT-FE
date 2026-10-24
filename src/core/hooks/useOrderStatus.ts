@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { OrderStatus, PaymentStatus, OrderResponse } from '../types/order.types';
+import { QizineApi } from '../api/axios';
 
 export interface OrderStatusUpdate {
   order_id: string;
@@ -76,18 +77,44 @@ export function useOrderStatus({
         eventSourceRef.current = null;
       };
     } else {
-      // Simulative / polling mode for local or fallback setups
-      const interval = setInterval(() => {
-        // Stop simulated progression once terminal states are reached
-        setCurrentStatus((prev) => {
-          if (prev === 'INITIATED') return 'ACCEPTED';
-          if (prev === 'ACCEPTED') return 'PREPARING';
-          if (prev === 'PREPARING') return 'READY';
-          return prev;
-        });
+      // Polling live backend order status with demo progression fallback
+      let isSubscribed = true;
+      const checkBackendStatus = async () => {
+        try {
+          const res = await QizineApi.getOrder(orderId, initialOrder?.ref_token);
+          if (res && res.status && isSubscribed) {
+            handleStatusUpdate({
+              order_id: res.order_id,
+              status: res.status as OrderStatus,
+              payment_status: res.payment_status as PaymentStatus,
+              timestamp: new Date().toISOString(),
+            });
+            return true;
+          }
+        } catch {
+          // ignore error
+        }
+        return false;
+      };
+
+      checkBackendStatus();
+
+      const interval = setInterval(async () => {
+        const found = await checkBackendStatus();
+        if (!found && isSubscribed) {
+          setCurrentStatus((prev) => {
+            if (prev === 'INITIATED') return 'ACCEPTED';
+            if (prev === 'ACCEPTED') return 'PREPARING';
+            if (prev === 'PREPARING') return 'READY';
+            return prev;
+          });
+        }
       }, pollIntervalMs);
 
-      return () => clearInterval(interval);
+      return () => {
+        isSubscribed = false;
+        clearInterval(interval);
+      };
     }
   }, [orderId, serverUrl, pollIntervalMs, handleStatusUpdate]);
 

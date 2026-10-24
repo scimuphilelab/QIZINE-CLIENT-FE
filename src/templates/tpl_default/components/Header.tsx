@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({ booth, onOpenWaiterCall }) => {
               <img
                 src={menu.cafe_profile.logo_url}
                 alt={menu.cafe_profile.name}
-                className="w-11 h-11 rounded-full object-cover shadow-xs border border-black/10 shrink-0"
+                className="w-11 h-11 min-w-[2.75rem] min-h-[2.75rem] max-w-[2.75rem] max-h-[2.75rem] rounded-full object-cover shadow-xs border border-black/10 shrink-0 block"
               />
             ) : (
               <div className="w-11 h-11 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">

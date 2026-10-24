@@ -4,7 +4,10 @@
  */
 
 export const ENV = {
-  API_BASE_URL: (import.meta.env.VITE_API_BASE_URL as string) || '/v1',
+  APP_BASE_URL: (import.meta.env.VITE_APP_BASE_URL as string) || (import.meta.env.APP_BASE_URL as string) || 'http://localhost:3001',
+  ADMIN_BASE_URL: (import.meta.env.VITE_ADMIN_BASE_URL as string) || (import.meta.env.ADMIN_BASE_URL as string) || 'http://localhost:5173',
+  API_BASE_URL: (import.meta.env.VITE_API_BASE_URL as string) || (import.meta.env.API_BASE_URL as string) || 'http://localhost:8080/v1',
+  HEADER_SECRET: (import.meta.env.VITE_HEADER_SECRET as string) || (import.meta.env.HEADER_SECRET as string) || 'qz_sec_live_9b83f0e1d4c7a5268394e1b7f205c6d83a19e2f4705c1d84b2e6a9f0375c81d2',
   ENABLE_MOCK_FALLBACK: (import.meta.env.VITE_ENABLE_MOCK_FALLBACK as string) !== 'false',
   VAPID_PUBLIC_KEY: (import.meta.env.VITE_VAPID_PUBLIC_KEY as string) || '',
   IS_DEV: import.meta.env.DEV,
@@ -47,7 +50,7 @@ export const API_ENDPOINTS = {
    * GET /v1/events/stream?order_id=:id&vendor_id=:vendor_id
    */
   ORDER_STREAM: (orderId: string, vendorId?: string) =>
-    `${ENV.API_BASE_URL}/events/stream?order_id=${encodeURIComponent(orderId)}${vendorId ? `&vendor_id=${encodeURIComponent(vendorId)}` : ''}`,
+    `${ENV.API_BASE_URL}/events/stream?order_id=${encodeURIComponent(orderId)}${vendorId ? `&vendor_id=${encodeURIComponent(vendorId)}` : ''}&header_secret=${encodeURIComponent(ENV.HEADER_SECRET)}`,
 
   /**
    * Floor Assistance & Call Waiter (QR-ORDER-BE):

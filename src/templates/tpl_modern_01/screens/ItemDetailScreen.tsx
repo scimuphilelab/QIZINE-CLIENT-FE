@@ -95,16 +95,16 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
           </button>
         </div>
 
-        {/* Large Food Image Centered in Hero Banner with Rounded Border Radius */}
-        <div className="w-full h-56 sm:h-64 flex items-center justify-center py-2">
-          <div className="w-52 h-52 sm:w-60 sm:h-60 rounded-[32px] overflow-hidden shadow-2xl border-4 border-white/70 bg-white/20 backdrop-blur-xs flex items-center justify-center p-1">
+        {/* Large Food Image Centered in Hero Banner with Fixed Sizing & Rounded Corners */}
+        <div className="w-full h-56 sm:h-64 flex items-center justify-center py-2 overflow-hidden">
+          <div className="w-52 h-52 sm:w-60 sm:h-60 min-w-[13rem] min-h-[13rem] max-w-[15rem] max-h-[15rem] rounded-[32px] overflow-hidden shadow-2xl border-4 border-white/70 bg-white/20 backdrop-blur-xs flex items-center justify-center p-1 relative shrink-0">
             <img
               src={imageUrl}
               alt={item.name}
               onError={(e) => {
                 (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
               }}
-              className="w-full h-full object-cover rounded-[24px] hover:scale-105 transition-transform duration-300"
+              className="w-full h-full max-w-full max-h-full object-cover rounded-[24px] hover:scale-105 transition-transform duration-300 block shrink-0"
             />
           </div>
         </div>

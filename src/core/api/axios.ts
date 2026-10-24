@@ -92,6 +92,7 @@ export const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    'x-header-secret': ENV.HEADER_SECRET,
   },
 });
 
@@ -99,6 +100,7 @@ export const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     config.headers['X-Client-Timestamp'] = new Date().toISOString();
+    config.headers['x-header-secret'] = ENV.HEADER_SECRET;
     return config;
   },
   (error) => Promise.reject(error)

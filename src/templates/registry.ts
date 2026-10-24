@@ -33,7 +33,7 @@ export const TEMPLATE_REGISTRY: Record<string, TemplateMeta> = {
     name: 'Street Bistro',
     description: 'Vibrant quick-pick layout with tactile category pills and energetic styling',
     recommendedFor: 'Food Trucks, Bistros & Casual Street Eats',
-    component: lazy(() => import('./tpl_modern_02')),
+    component: lazy(() => import('./tpl_modern_01')),
   },
 };
 

@@ -52,6 +52,7 @@ export interface CartCalculation {
 }
 
 export interface QRBoothContext {
+  qr_key?: string;
   booth_id: string;
   booth_label: string;
   zone?: string;

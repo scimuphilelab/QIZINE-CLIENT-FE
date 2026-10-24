@@ -82,15 +82,15 @@ export const CartScreen: React.FC<CartScreenProps> = ({
                 key={item.cart_item_id}
                 className="bg-white rounded-3xl p-3.5 sm:p-4 border border-stone-200/60 shadow-sm flex items-center justify-between gap-3.5 transition-all"
               >
-                {/* Left Thumbnail */}
-                <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl overflow-hidden shrink-0 bg-[#FAF4EE] flex items-center justify-center p-1.5 border border-stone-100">
+                {/* Left Thumbnail - Strictly Fixed Sizing (80px by 80px) */}
+                <div className="w-20 h-20 min-w-[5rem] min-h-[5rem] max-w-[5rem] max-h-[5rem] rounded-2xl overflow-hidden shrink-0 bg-[#FAF4EE] flex items-center justify-center p-1 border border-stone-200/60 relative">
                   <img
                     src={item.image_url || getFoodImageFallback(item.name)}
                     alt={item.name}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
                     }}
-                    className="w-full h-full object-cover rounded-xl"
+                    className="w-full h-full max-w-full max-h-full object-cover rounded-xl block shrink-0"
                   />
                 </div>
 

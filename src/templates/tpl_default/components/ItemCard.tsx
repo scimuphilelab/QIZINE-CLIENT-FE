@@ -101,13 +101,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onOpenCustomise }) => 
       {/* Right Image & Swiggy-Style ADD+ Action */}
       <div className="relative flex flex-col items-center shrink-0 w-24">
         {item.images && item.images.length > 0 ? (
-          <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-100 shadow-xs mb-2">
+          <div className="w-24 h-24 min-w-[6rem] min-h-[6rem] max-w-[6rem] max-h-[6rem] rounded-2xl overflow-hidden bg-gray-100 shadow-xs mb-2 shrink-0">
             <img
               src={item.images[0].url}
               alt={item.name}
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-cover"
+              className="w-full h-full max-w-full max-h-full object-cover block shrink-0"
             />
           </div>
         ) : (

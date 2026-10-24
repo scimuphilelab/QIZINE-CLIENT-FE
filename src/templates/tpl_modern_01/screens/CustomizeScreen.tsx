@@ -57,15 +57,15 @@ export const CustomizeScreen: React.FC<CustomizeScreenProps> = ({
           <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
         </button>
 
-        {/* Dish Image */}
-        <div className="w-full h-44 rounded-3xl overflow-hidden mb-4 bg-white shadow-sm border border-stone-200/70 p-2 flex items-center justify-center">
+        {/* Dish Image with Fixed Dimensions */}
+        <div className="w-full h-44 max-h-44 rounded-3xl overflow-hidden mb-4 bg-white shadow-sm border border-stone-200/70 p-2 flex items-center justify-center relative shrink-0">
           <img
             src={
               item.images?.[0]?.url ||
               'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'
             }
             alt={item.name}
-            className="w-full h-full object-contain"
+            className="w-full h-full max-w-full max-h-full object-contain block shrink-0"
           />
         </div>
 

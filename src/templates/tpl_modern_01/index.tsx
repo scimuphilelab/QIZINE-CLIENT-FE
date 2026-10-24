@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { Clock, ArrowLeft, UtensilsCrossed } from 'lucide-react';
 import { HomeScreen } from './screens/HomeScreen';
 import { CategoryScreen } from './screens/CategoryScreen';
 import { ItemDetailScreen } from './screens/ItemDetailScreen';
@@ -91,12 +92,7 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     } else if (tab === 'cart') {
       setCurrentScreen('cart');
     } else if (tab === 'profile') {
-      // If order exists, show order confirmation or tracker
-      if (activeOrder) {
-        setCurrentScreen('tracker');
-      } else {
-        setCurrentScreen('home');
-      }
+      setCurrentScreen('tracker');
     }
   };
 
@@ -168,9 +164,15 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
         ? crypto.randomUUID()
         : `idemp_${Date.now()}`;
 
+    const effectiveQrKey =
+      booth?.qr_key ||
+      new URLSearchParams(window.location.search).get('booth') ||
+      new URLSearchParams(window.location.search).get('qr') ||
+      'qr_default';
+
     try {
       const payload = {
-        qr_key: 'qr_default',
+        qr_key: effectiveQrKey,
         idempotency_key: idempotencyKey,
         payment_method: 'UPI' as const,
         items: items.map((i) => ({
@@ -189,18 +191,19 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
       setActiveOrder(orderResult);
       clearCart();
       setCurrentScreen('confirmation');
-    } catch {
-      // Fallback simulated order for demonstration
+    } catch (err) {
+      console.warn('[Modern01Template] Order API fallback active:', err);
+      // Fallback simulated order for demonstration if offline
       const simulated: CreateOrderResponseData = {
         order_id: `ord_${Date.now()}`,
-        order_no: 42,
-        ref_token: 'FB2437',
+        order_no: Math.floor(10 + Math.random() * 89),
+        ref_token: Math.floor(1000 + Math.random() * 9000).toString(16).toUpperCase(),
         status: 'ACCEPTED',
         payment_status: 'SUCCESS',
         total_paise: calculation.grand_total_paise,
         currency: 'INR',
-        booth_label: booth?.booth_label || 'Baker Street',
-        serving_model: 'WAITER_SERVING',
+        booth_label: booth?.booth_label || 'Table T-1',
+        serving_model: booth?.serving_model === 'DELIVERY' ? 'DELIVERY' : (booth?.serving_model === 'TAKEAWAY' ? 'SELF_SERVING' : 'WAITER_SERVING'),
         upi_intent_uri: '',
       };
       localStorage.setItem('qizine_active_order', JSON.stringify(simulated));
@@ -211,7 +214,10 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
   };
 
   const showBottomNav =
-    currentScreen === 'home' || currentScreen === 'category' || currentScreen === 'cart';
+    currentScreen === 'home' ||
+    currentScreen === 'category' ||
+    currentScreen === 'cart' ||
+    currentScreen === 'tracker';
 
   return (
     <div className="min-h-screen bg-[#FAF4EE] selection:bg-[#FF385C]/20 selection:text-[#FF385C] flex flex-col justify-start">
@@ -315,19 +321,40 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
         )}
 
         {/* Real-time Order Tracker Screen */}
-        {currentScreen === 'tracker' && activeOrder && (
-          <OrderTrackerView
-            orderData={activeOrder}
-            onBackToMenu={() => {
-              setCurrentScreen('home');
-              setActiveTab('home');
-            }}
-            onOrderCancelled={() => {
-              setActiveOrder(null);
-              setCurrentScreen('home');
-              setActiveTab('home');
-            }}
-          />
+        {currentScreen === 'tracker' && (
+          activeOrder ? (
+            <OrderTrackerView
+              orderData={activeOrder}
+              onBackToMenu={() => {
+                setCurrentScreen('home');
+                setActiveTab('home');
+              }}
+              onOrderCancelled={() => {
+                setActiveOrder(null);
+                setCurrentScreen('home');
+                setActiveTab('home');
+              }}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[500px]">
+              <div className="w-20 h-20 rounded-full bg-[#FF385C]/10 flex items-center justify-center text-[#FF385C] mb-5 shadow-sm">
+                <UtensilsCrossed className="w-9 h-9" />
+              </div>
+              <h3 className="text-xl font-bold text-stone-900 tracking-tight">No Active Orders</h3>
+              <p className="text-sm text-stone-500 mt-2 max-w-xs font-normal">
+                You haven't placed any orders yet. Explore our delicious menu and place your order!
+              </p>
+              <button
+                onClick={() => {
+                  setCurrentScreen('home');
+                  setActiveTab('home');
+                }}
+                className="mt-6 px-7 py-3 rounded-2xl bg-[#FF385C] text-white font-semibold text-sm shadow-md hover:bg-[#E02D50] active:scale-95 transition-all"
+              >
+                Explore Menu
+              </button>
+            </div>
+          )
         )}
 
         {/* Persistent Floating Bottom Navigation Bar */}

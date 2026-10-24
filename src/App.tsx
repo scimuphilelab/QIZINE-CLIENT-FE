@@ -137,6 +137,7 @@ export const App: React.FC = () => {
   const boothContext: QRBoothContext | null = useMemo(() => {
     if (!resolutionData) return null;
     return {
+      qr_key: activeQrKey,
       booth_id: resolutionData.booth.id,
       booth_label: resolutionData.booth.label,
       zone: resolutionData.booth.zone,
@@ -145,24 +146,31 @@ export const App: React.FC = () => {
       serving_model: resolutionData.booth.serving_model,
       accept_order_type: resolutionData.vendor.accept_order_type,
     };
-  }, [resolutionData]);
+  }, [resolutionData, activeQrKey]);
 
   // View 1: Branded Skeleton Loader
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FAF4EC] text-[#1C1917] p-6 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-[#1C1917] text-[#FAF4EC] flex items-center justify-center shadow-[0_8px_20px_rgba(28,25,23,0.25)] animate-pulse mb-4">
-          <UtensilsCrossed className="w-8 h-8" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FAF4EE] text-stone-900 p-6 text-center font-sans selection:bg-[#FF385C]/20 selection:text-[#FF385C]">
+        <div className="relative w-20 h-20 rounded-3xl bg-[#FF385C] text-white flex items-center justify-center shadow-xl shadow-red-500/25 mb-5 animate-bounce">
+          <UtensilsCrossed className="w-10 h-10 stroke-[2.2]" />
+          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white ring-2 ring-emerald-500/30 animate-pulse" />
         </div>
-        <h2 className="font-serif font-black text-xl text-[#1C1917] tracking-tight">
-          Qizine Dining
+        <h2 className="font-black text-2xl text-stone-900 tracking-tight">
+          Qizine
         </h2>
-        <p className="text-xs text-[#7E756B] mt-1 font-medium animate-pulse">
-          Connecting to table & fetching digital menu from backend...
+        <p className="text-xs sm:text-sm text-stone-500 mt-1.5 font-medium max-w-[260px] leading-relaxed">
+          Connecting to your table & loading freshly prepared menu...
         </p>
+
+        {/* Pulsing Loading Bar */}
+        <div className="w-48 h-1.5 bg-stone-200/80 rounded-full overflow-hidden mt-6">
+          <div className="w-full h-full bg-gradient-to-r from-[#FF512F] via-[#FF385C] to-[#DD2476] rounded-full animate-pulse" />
+        </div>
+
         {activeQrKey && (
-          <span className="mt-3 text-[11px] font-mono bg-[#EFE5D8] px-3 py-1 rounded-full text-[#7E756B] border border-[#E2D5C3]">
-            QR Key: {activeQrKey}
+          <span className="mt-4 text-[11px] font-mono font-bold bg-white px-3.5 py-1.5 rounded-full text-stone-500 border border-stone-200 shadow-2xs">
+            📍 Table Code: {activeQrKey}
           </span>
         )}
       </div>

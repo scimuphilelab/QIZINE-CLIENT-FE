@@ -31,13 +31,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onOpenCustomise }) => 
   return (
     <article className="bg-white rounded-2xl p-4 border border-[#C8A15B]/30 shadow-xs mb-3 transition hover:shadow-soft">
       {item.images && item.images.length > 0 && (
-        <div className="relative h-44 w-full mb-3 rounded-xl overflow-hidden">
+        <div className="relative h-44 max-h-44 w-full mb-3 rounded-xl overflow-hidden shrink-0">
           <img
             src={item.images[0].url}
             alt={item.name}
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover"
+            className="w-full h-full max-w-full max-h-full object-cover block shrink-0"
           />
           <div className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-xs text-[#C8A15B] text-xs font-serif px-2.5 py-0.5 rounded-md font-semibold">
             {formatCurrency(item.base_price_paise)}

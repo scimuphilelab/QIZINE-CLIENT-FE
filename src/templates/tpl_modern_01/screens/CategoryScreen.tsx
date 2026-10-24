@@ -162,8 +162,8 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
                   </button>
                 </div>
 
-                {/* Food Image with Rounded Border Radius */}
-                <div className="w-full h-28 sm:h-34 rounded-2xl overflow-hidden bg-stone-50 border border-stone-100 flex items-center justify-center my-1.5 p-1 shadow-2xs">
+                {/* Food Image with Fixed Sizing & Rounded Border Radius */}
+                <div className="w-full h-28 sm:h-32 max-h-32 rounded-2xl overflow-hidden bg-stone-50 border border-stone-100 flex items-center justify-center my-1.5 p-1 shadow-2xs relative shrink-0">
                   <img
                     src={imageUrl}
                     alt={item.name}
@@ -171,7 +171,7 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
                       (e.target as HTMLImageElement).src =
                         getFoodImageFallback(item.name);
                     }}
-                    className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
+                    className="w-full h-full max-w-full max-h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 drop-shadow-sm block shrink-0"
                   />
                 </div>
 

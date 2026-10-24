@@ -23,6 +23,11 @@
   box-sizing: border-box;
 }
 
+img, svg, video {
+  max-width: 100%;
+  display: block;
+}
+
 html, body {
   margin: 0;
   padding: 0;

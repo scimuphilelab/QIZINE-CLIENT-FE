@@ -43,8 +43,13 @@ export const OrderConfirmationScreen: React.FC<OrderConfirmationScreenProps> = (
           </div>
 
           <div className="flex justify-between text-xs">
+            <span className="text-stone-400">Table / Booth</span>
+            <span className="font-bold text-stone-800">{orderData?.booth_label || 'Table T-1'}</span>
+          </div>
+
+          <div className="flex justify-between text-xs">
             <span className="text-stone-400">Estimated Prep Time</span>
-            <span className="font-bold text-stone-800">20 - 30 mins</span>
+            <span className="font-bold text-stone-800">15 - 25 mins</span>
           </div>
 
           <div className="flex justify-between text-xs">

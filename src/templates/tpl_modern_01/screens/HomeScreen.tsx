@@ -125,7 +125,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Left: Cafe Avatar / Logo (Clickable to open Vendor details) */}
         <button
           onClick={() => setShowVendorModal(true)}
-          className="relative w-12 h-12 rounded-2xl bg-white border border-stone-200/80 p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+          className="relative w-12 h-12 min-w-[3rem] min-h-[3rem] max-w-[3rem] max-h-[3rem] rounded-2xl bg-white border border-stone-200/80 p-1 shadow-sm overflow-hidden flex items-center justify-center shrink-0 active:scale-95 transition-transform"
           aria-label="View Restaurant Info"
         >
           {menu?.cafe_profile?.logo_url && !logoError ? (
@@ -133,7 +133,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               src={menu.cafe_profile.logo_url}
               alt={cafeName}
               onError={() => setLogoError(true)}
-              className="w-full h-full object-cover rounded-xl"
+              className="w-full h-full max-w-full max-h-full object-cover rounded-xl block shrink-0"
             />
           ) : (
             <span className="text-2xl">🍔</span>
@@ -215,12 +215,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </button>
           </div>
 
-          {/* Right Image Graphic */}
-          <div className="relative w-32 h-28 sm:w-40 sm:h-34 shrink-0 flex items-center justify-end">
+          {/* Right Image Graphic - Fixed Boundaries */}
+          <div className="relative w-32 h-28 sm:w-36 sm:h-32 min-w-[7rem] max-w-[9rem] shrink-0 flex items-center justify-end overflow-hidden">
             <img
               src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80"
               alt="Delicious Burger Delivery"
-              className="w-28 h-28 sm:w-36 sm:h-34 object-cover rounded-2xl drop-shadow-xl hover:scale-105 transition-transform duration-300"
+              className="w-28 h-28 sm:w-32 sm:h-32 max-w-full max-h-full object-cover rounded-2xl drop-shadow-xl hover:scale-105 transition-transform duration-300 block shrink-0"
             />
           </div>
         </div>
@@ -332,8 +332,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     </button>
                   </div>
 
-                  {/* Centered Food Image with Rounded Border Radius */}
-                  <div className="w-full h-28 sm:h-34 rounded-2xl overflow-hidden bg-stone-50 border border-stone-100 flex items-center justify-center my-1.5 p-1 shadow-2xs">
+                  {/* Centered Food Image with Fixed Sizing & Rounded Corners */}
+                  <div className="w-full h-28 sm:h-32 max-h-32 rounded-2xl overflow-hidden bg-stone-50 border border-stone-100 flex items-center justify-center my-1.5 p-1 shadow-2xs relative shrink-0">
                     <img
                       src={imageUrl}
                       alt={item.name}
@@ -341,7 +341,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                         (e.target as HTMLImageElement).src =
                           getFoodImageFallback(item.name);
                       }}
-                      className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 drop-shadow-sm"
+                      className="w-full h-full max-w-full max-h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 drop-shadow-sm block shrink-0"
                     />
                   </div>
 
@@ -440,12 +440,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <div className="p-5 sm:p-6 overflow-y-auto no-scrollbar space-y-5 -mt-10 z-20">
               {/* Logo + Name Header */}
               <div className="flex items-end gap-3.5">
-                <div className="w-20 h-20 rounded-2xl bg-white border-2 border-white shadow-xl p-1.5 shrink-0 overflow-hidden flex items-center justify-center">
+                <div className="w-20 h-20 min-w-[5rem] min-h-[5rem] max-w-[5rem] max-h-[5rem] rounded-2xl bg-white border-2 border-white shadow-xl p-1.5 shrink-0 overflow-hidden flex items-center justify-center relative">
                   {menu?.cafe_profile?.logo_url && !logoError ? (
                     <img
                       src={menu.cafe_profile.logo_url}
                       alt={cafeName}
-                      className="w-full h-full object-cover rounded-xl"
+                      className="w-full h-full max-w-full max-h-full object-cover rounded-xl block shrink-0"
                     />
                   ) : (
                     <span className="text-3xl">🍔</span>

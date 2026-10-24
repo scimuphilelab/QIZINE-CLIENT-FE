@@ -11,11 +11,11 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 3001,
     host: true,
     proxy: {
       '/v1': {
-        target: 'http://192.168.29.18:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
       },
