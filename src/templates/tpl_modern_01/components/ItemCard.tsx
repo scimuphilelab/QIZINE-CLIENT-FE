@@ -37,7 +37,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onOpenCustomise }) => 
             alt={item.name}
             loading="lazy"
             decoding="async"
-            className="w-full h-full max-w-full max-h-full object-cover block shrink-0"
+            className="w-full h-full max-w-full max-h-full object-cover rounded-xl block shrink-0"
           />
           <div className="absolute top-2.5 right-2.5 bg-black/60 backdrop-blur-xs text-[#C8A15B] text-xs font-serif px-2.5 py-0.5 rounded-md font-semibold">
             {formatCurrency(item.base_price_paise)}

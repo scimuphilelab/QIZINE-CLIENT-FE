@@ -99,15 +99,9 @@ export function useOrderStatus({
 
       checkBackendStatus();
 
-      const interval = setInterval(async () => {
-        const found = await checkBackendStatus();
-        if (!found && isSubscribed) {
-          setCurrentStatus((prev) => {
-            if (prev === 'INITIATED') return 'ACCEPTED';
-            if (prev === 'ACCEPTED') return 'PREPARING';
-            if (prev === 'PREPARING') return 'READY';
-            return prev;
-          });
+      const interval = setInterval(() => {
+        if (isSubscribed) {
+          checkBackendStatus();
         }
       }, pollIntervalMs);
 

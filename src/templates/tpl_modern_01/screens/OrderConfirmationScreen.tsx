@@ -13,15 +13,19 @@ export const OrderConfirmationScreen: React.FC<OrderConfirmationScreenProps> = (
   onViewOrderDetails,
   onBackToHome,
 }) => {
-  const displayToken = orderData?.ref_token ? `#${orderData.ref_token}` : '#FB2437';
-  const paymentMethod = orderData?.payment_status ? 'UPI' : 'UPI';
+  const displayToken = orderData?.ref_token
+    ? `#${orderData.ref_token}`
+    : orderData?.order_no
+    ? `#${orderData.order_no}`
+    : 'Pending';
+  const paymentMethod = orderData?.payment_status || 'UPI';
 
   return (
-    <div className="flex-1 bg-[#FAF4EE] text-stone-900 pb-16 font-sans px-4 sm:px-5 pt-8 flex flex-col justify-between selection:bg-[#FF385C]/20 selection:text-[#FF385C]">
+    <div className="flex-1 bg-[#FAF9F7] text-stone-900 pb-16 font-sans px-4 sm:px-5 pt-8 flex flex-col justify-between selection:bg-[#C0192A]/20 selection:text-[#C0192A]">
       <div>
         {/* Animated Checkmark Badge */}
         <div className="flex flex-col items-center justify-center text-center mt-6 mb-8">
-          <div className="w-20 h-20 rounded-full bg-[#FF385C] text-white flex items-center justify-center shadow-lg shadow-red-500/30 mb-4 animate-in zoom-in duration-300">
+          <div className="w-20 h-20 rounded-full bg-[#C0192A] text-white flex items-center justify-center shadow-lg shadow-red-600/30 mb-4 animate-in zoom-in duration-300">
             <Check className="w-10 h-10 stroke-[3]" />
           </div>
 
@@ -44,18 +48,31 @@ export const OrderConfirmationScreen: React.FC<OrderConfirmationScreenProps> = (
 
           <div className="flex justify-between text-xs">
             <span className="text-stone-400">Table / Booth</span>
-            <span className="font-bold text-stone-800">{orderData?.booth_label || 'Table T-1'}</span>
+            <span className="font-bold text-stone-800">
+              {orderData?.booth_label ? `Table ${orderData.booth_label}` : 'Direct Order'}
+            </span>
           </div>
 
+          {orderData?.serving_model && (
+            <div className="flex justify-between text-xs">
+              <span className="text-stone-400">Service</span>
+              <span className="font-bold text-stone-800 uppercase tracking-wide text-[11px]">
+                {orderData.serving_model.replace(/_/g, ' ')}
+              </span>
+            </div>
+          )}
+
           <div className="flex justify-between text-xs">
-            <span className="text-stone-400">Estimated Prep Time</span>
-            <span className="font-bold text-stone-800">15 - 25 mins</span>
+            <span className="text-stone-400">Status</span>
+            <span className="font-bold text-stone-800 uppercase tracking-wide text-[11px]">
+              {orderData?.status || 'RECEIVED'}
+            </span>
           </div>
 
           <div className="flex justify-between text-xs">
             <span className="text-stone-400">Payment Status</span>
             <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-              Verified ({paymentMethod})
+              {orderData?.payment_status || 'PENDING'}
             </span>
           </div>
         </div>
@@ -65,7 +82,7 @@ export const OrderConfirmationScreen: React.FC<OrderConfirmationScreenProps> = (
       <div className="space-y-3">
         <button
           onClick={onViewOrderDetails}
-          className="w-full py-4 px-6 bg-[#FF385C] hover:bg-[#E0294C] text-white font-bold text-sm rounded-2xl shadow-lg shadow-red-500/25 active:scale-95 transition text-center flex items-center justify-center gap-1.5"
+          className="w-full py-4 px-6 bg-[#C0192A] hover:bg-[#A31423] text-white font-bold text-sm rounded-2xl shadow-lg shadow-red-600/25 active:scale-95 transition text-center flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <span>Track Live Order</span>
           <ArrowRight className="w-4 h-4 stroke-[2.5]" />

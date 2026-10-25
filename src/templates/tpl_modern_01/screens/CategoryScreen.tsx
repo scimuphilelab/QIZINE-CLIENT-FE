@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Plus, Heart } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import type { MenuCategory, MenuItem, MenuSection } from '../../../core/types/menu.types';
 import { useCart } from '../../../core/hooks/useCart';
 import { getFoodImageFallback } from '../../../core/utils/imageFallback';
@@ -28,12 +28,6 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
 }) => {
   const { formatCurrency } = useCart();
   const [filter, setFilter] = useState<'All' | 'Veg' | 'Non-Veg'>('All');
-  const [favorites, setFavorites] = useState<Record<string, boolean>>({});
-
-  const toggleFavorite = (itemId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFavorites((prev) => ({ ...prev, [itemId]: !prev[itemId] }));
-  };
 
   // Filter items based on selected pill
   const filteredItems = useMemo(() => {
@@ -50,7 +44,7 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
   }, [category.items, filter]);
 
   return (
-    <div className="flex-1 bg-[#FAF4EE] text-stone-900 pb-28 font-sans px-4 sm:px-6 pt-5">
+    <div className="flex-1 bg-[#FAF9F7] text-stone-900 pb-28 font-sans px-4 sm:px-6 pt-5">
       {/* Top Bar */}
       <div className="flex items-center justify-between mb-5">
         <button
@@ -79,7 +73,7 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
                 onClick={() => onSelectCategory(c.id)}
                 className={`px-4 py-2 rounded-full text-xs sm:text-sm font-extrabold whitespace-nowrap transition-all ${
                   isSelected
-                    ? 'bg-[#FF385C] text-white shadow-md shadow-red-500/25'
+                    ? 'bg-[#C0192A] text-white shadow-md shadow-red-600/25'
                     : 'bg-white text-stone-700 border border-stone-200/60 hover:bg-stone-50'
                 }`}
               >
@@ -126,13 +120,12 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
       ) : (
         <div className="grid grid-cols-2 gap-3.5 sm:gap-4.5">
           {filteredItems.map((item) => {
-            const isFav = !!favorites[item.id];
             const imageUrl =
               item.images?.[0]?.url || getFoodImageFallback(item.name);
             const subLabel =
               item.short_name ||
               item.tags?.[0] ||
-              (item.diet_type === 'VEG' ? 'Vegetarian' : 'Chef Special');
+              (item.diet_type === 'VEG' ? 'Vegetarian' : item.diet_type === 'NON_VEG' ? 'Non-Vegetarian' : item.diet_type || '');
 
             return (
               <div
@@ -140,26 +133,20 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
                 onClick={() => onSelectItem(item)}
                 className="bg-white rounded-3xl p-3.5 sm:p-4 border border-stone-200/60 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between cursor-pointer group active:scale-[0.98]"
               >
-                {/* Top Row: Rating Badge & Heart Favorite */}
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center gap-1 text-xs font-bold text-stone-800 bg-stone-50 px-2 py-0.5 rounded-full">
-                    <span className="text-amber-500">★</span>
-                    <span>4.9</span>
-                  </div>
-
-                  <button
-                    onClick={(e) => toggleFavorite(item.id, e)}
-                    className="p-1 rounded-full text-stone-400 hover:text-[#FF385C] transition-colors"
-                    aria-label="Add to favorites"
-                  >
-                    <Heart
-                      className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform active:scale-125 ${
-                        isFav
-                          ? 'fill-[#FF385C] text-[#FF385C]'
-                          : 'text-stone-300 stroke-[2]'
-                      }`}
-                    />
-                  </button>
+                {/* Top Row: Diet / Tag Badge */}
+                <div className="flex items-center justify-between mb-1.5 min-h-[22px]">
+                  {item.diet_type ? (
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-stone-700 bg-stone-50 border border-stone-200/60 px-2 py-0.5 rounded-full">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          item.diet_type === 'VEG' || item.diet_type === 'VEGAN'
+                            ? 'bg-emerald-500'
+                            : 'bg-red-500'
+                        }`}
+                      />
+                      <span>{item.diet_type === 'VEG' ? 'Veg' : item.diet_type === 'VEGAN' ? 'Vegan' : 'Non-Veg'}</span>
+                    </div>
+                  ) : <div />}
                 </div>
 
                 {/* Food Image with Fixed Sizing & Rounded Border Radius */}
@@ -196,7 +183,7 @@ export const CategoryScreen: React.FC<CategoryScreenProps> = ({
                       e.stopPropagation();
                       onQuickAdd(item);
                     }}
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FF385C] hover:bg-[#E0294C] text-white flex items-center justify-center shadow-md shadow-red-500/25 hover:scale-110 active:scale-95 transition-all"
+                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#C0192A] hover:bg-[#A31423] text-white flex items-center justify-center shadow-md shadow-red-600/20 hover:scale-110 active:scale-95 transition-all"
                     aria-label="Add item"
                   >
                     <Plus className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />

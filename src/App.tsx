@@ -23,10 +23,12 @@ const getInitialQrKey = (): string => {
   try {
     const url = new URL(window.location.href);
     const param =
+      url.searchParams.get('qr_key') ||
       url.searchParams.get('booth') ||
       url.searchParams.get('q') ||
       url.searchParams.get('qr') ||
-      url.searchParams.get('qr_code_key');
+      url.searchParams.get('qr_code_key') ||
+      url.searchParams.get('key');
     if (param && param.trim()) return param.trim();
 
     const pathParts = url.pathname.split('/').filter(Boolean);
@@ -39,8 +41,8 @@ const getInitialQrKey = (): string => {
   } catch {
     // fallback
   }
-  // Default to active test booth key for seamless local preview
-  return 'qr_oe234pwumurkd59y';
+  // Default to active live booth key for seamless local preview
+  return 'qr_vll1bw3umvm8g31s';
 };
 
 export const App: React.FC = () => {
@@ -126,7 +128,9 @@ export const App: React.FC = () => {
       newUrl.searchParams.set('booth', trimmed);
       newUrl.searchParams.delete('q');
       newUrl.searchParams.delete('qr');
+      newUrl.searchParams.delete('qr_key');
       newUrl.searchParams.delete('qr_code_key');
+      newUrl.searchParams.delete('key');
       window.history.pushState({}, '', newUrl.toString());
     } catch {
       // Ignored
@@ -145,6 +149,9 @@ export const App: React.FC = () => {
       vendor_name: resolutionData.vendor.name,
       serving_model: resolutionData.booth.serving_model,
       accept_order_type: resolutionData.vendor.accept_order_type,
+      is_open: resolutionData.vendor.is_open,
+      opening_time: resolutionData.vendor.opening_time,
+      closing_time: resolutionData.vendor.closing_time,
     };
   }, [resolutionData, activeQrKey]);
 
@@ -317,31 +324,6 @@ export const App: React.FC = () => {
                       onKeyDown={(e) => e.key === 'Enter' && handleQrSearch(qrInput)}
                       className="w-full bg-[#EFE5D8] rounded-xl pl-9 pr-3 py-2 text-xs text-[#1C1917] placeholder-[#7E756B] focus:outline-none focus:ring-2 focus:ring-[#1C1917]/20 border border-[#E2D5C3]"
                     />
-                  </div>
-                </div>
-
-                {/* Quick Presets */}
-                <div className="mt-3">
-                  <p className="text-[10px] font-bold text-[#7E756B] uppercase tracking-wider mb-1.5">
-                    Active Booth Key:
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {['qr_3m0hhmnnmurkd5l7'].map((k) => (
-                      <button
-                        key={k}
-                        onClick={() => {
-                          setQrInput(k);
-                          handleQrSearch(k);
-                        }}
-                        className={`text-[10px] font-mono font-semibold px-2.5 py-1 rounded-lg border transition ${
-                          activeQrKey === k
-                            ? 'bg-[#1C1917] text-white border-black'
-                            : 'bg-white hover:bg-[#EFE5D8] text-[#1C1917] border-[#E8DDCF]'
-                        }`}
-                      >
-                        {k}
-                      </button>
-                    ))}
                   </div>
                 </div>
 

@@ -3,11 +3,17 @@ import { ArrowLeft, Check, Plus, Minus } from 'lucide-react';
 import type { MenuItem, MenuItemAddon } from '../../../core/types/menu.types';
 import type { SelectedAddon } from '../../../core/types/order.types';
 import { useCart } from '../../../core/hooks/useCart';
+import { getFoodImageFallback } from '../../../core/utils/imageFallback';
 
 export interface CustomizeScreenProps {
   item: MenuItem;
   onBack: () => void;
-  onConfirm: (item: MenuItem, selectedAddons: SelectedAddon[], quantity: number) => void;
+  onConfirm: (
+    item: MenuItem,
+    variantId: string | undefined,
+    selectedAddons: SelectedAddon[],
+    quantity: number
+  ) => void;
 }
 
 export const CustomizeScreen: React.FC<CustomizeScreenProps> = ({
@@ -18,6 +24,13 @@ export const CustomizeScreen: React.FC<CustomizeScreenProps> = ({
   const { formatCurrency } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+
+  // Variants selection
+  const hasVariants = Boolean(item.variants && item.variants.length > 0);
+  const defaultVar = hasVariants
+    ? item.variants!.find((v) => v.is_default) || item.variants![0]
+    : undefined;
+  const [selectedVariant, setSelectedVariant] = useState(defaultVar);
 
   // Extract addons dynamically from MongoDB item document structure
   const firstAddonGroup = item.addon_groups?.[0];
@@ -41,8 +54,11 @@ export const CustomizeScreen: React.FC<CustomizeScreenProps> = ({
     }
   };
 
+  const baseUnitPricePaise = selectedVariant
+    ? selectedVariant.price_paise
+    : item.base_price_paise;
   const addonTotalPaise = selectedAddons.reduce((sum, a) => sum + a.price_paise, 0);
-  const totalUnitPricePaise = item.base_price_paise + addonTotalPaise;
+  const totalUnitPricePaise = baseUnitPricePaise + addonTotalPaise;
   const grandTotalPaise = totalUnitPricePaise * quantity;
 
   return (
@@ -60,12 +76,12 @@ export const CustomizeScreen: React.FC<CustomizeScreenProps> = ({
         {/* Dish Image with Fixed Dimensions */}
         <div className="w-full h-44 max-h-44 rounded-3xl overflow-hidden mb-4 bg-white shadow-sm border border-stone-200/70 p-2 flex items-center justify-center relative shrink-0">
           <img
-            src={
-              item.images?.[0]?.url ||
-              'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'
-            }
+            src={item.images?.[0]?.url || getFoodImageFallback(item.name)}
             alt={item.name}
-            className="w-full h-full max-w-full max-h-full object-contain block shrink-0"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
+            }}
+            className="w-full h-full max-w-full max-h-full object-cover rounded-2xl block shrink-0"
           />
         </div>
 
@@ -75,13 +91,46 @@ export const CustomizeScreen: React.FC<CustomizeScreenProps> = ({
             {item.name}
           </h1>
           <span className="font-extrabold text-base sm:text-lg text-[#FF385C]">
-            {formatCurrency(item.base_price_paise)}
+            {formatCurrency(baseUnitPricePaise)}
           </span>
         </div>
 
-        <p className="text-xs text-stone-500 mb-4 leading-relaxed">
-          {item.description || 'Juicy patty, fresh lettuce, tomato, onion, special sauce.'}
-        </p>
+        {Boolean(item.description) && (
+          <p className="text-xs text-stone-500 mb-4 leading-relaxed">
+            {item.description}
+          </p>
+        )}
+
+        {/* Dynamic Portion / Variant Selection if present */}
+        {hasVariants && (
+          <div className="mb-4 pt-2 border-t border-stone-200/60">
+            <h3 className="font-bold text-sm text-stone-900 mb-2">Select Portion / Size</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {item.variants!.map((v) => {
+                const isSelected = selectedVariant?.id === v.id;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setSelectedVariant(v)}
+                    className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                      isSelected
+                        ? 'border-[#FF385C] bg-red-50/50 shadow-xs ring-1 ring-[#FF385C]'
+                        : 'border-stone-200/80 bg-white hover:bg-stone-50'
+                    }`}
+                  >
+                    <span className={`text-xs font-bold ${isSelected ? 'text-[#FF385C]' : 'text-stone-800'}`}>
+                      {v.name}
+                    </span>
+                    <span className="text-[11px] font-extrabold text-stone-600 mt-0.5">
+                      {formatCurrency(v.price_paise)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Add Extras Section */}
         {availableAddons.length > 0 && (
@@ -153,7 +202,7 @@ export const CustomizeScreen: React.FC<CustomizeScreenProps> = ({
         </div>
 
         <button
-          onClick={() => onConfirm(item, selectedAddons, quantity)}
+          onClick={() => onConfirm(item, selectedVariant?.id, selectedAddons, quantity)}
           className="w-full py-4 px-6 bg-[#FF385C] hover:bg-[#E0294C] text-white font-bold text-sm rounded-2xl shadow-lg shadow-red-500/25 active:scale-95 transition flex items-center justify-center gap-2"
         >
           <span>Confirm & Add to Basket</span>

@@ -60,6 +60,9 @@ export interface QRBoothContext {
   vendor_name: string;
   serving_model: ServingModel;
   accept_order_type: AcceptOrderType;
+  is_open?: boolean;
+  opening_time?: string;
+  closing_time?: string;
 }
 
 export interface OrderItemPayload {

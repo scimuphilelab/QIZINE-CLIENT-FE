@@ -33,12 +33,9 @@ export const UniversalErrorPage: React.FC<UniversalErrorPageProps> = ({
             <Store className="w-4 h-4 stroke-[2.2]" />
           </div>
           <span className="font-black text-xl tracking-tight text-stone-900">
-            Qizine
+            Qizine.in
           </span>
         </div>
-        <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#FF385C] bg-red-50 px-3 py-1 rounded-full border border-red-200/60">
-          Customer Portal
-        </span>
       </header>
 
       {/* Main Error Box */}
@@ -82,7 +79,7 @@ export const UniversalErrorPage: React.FC<UniversalErrorPageProps> = ({
                 <input
                   id="booth-key-input"
                   type="text"
-                  placeholder="e.g. qr_oe234pwumurkd59y"
+                  placeholder="e.g. qr_vll1bw3umvm8g31s"
                   value={inputKey}
                   onChange={(e) => setInputKey(e.target.value)}
                   className="w-full bg-[#FAF4EE] border border-stone-200/90 rounded-2xl pl-4 pr-12 py-3.5 text-xs sm:text-sm text-stone-900 placeholder-stone-400 font-mono focus:outline-none focus:ring-2 focus:ring-[#FF385C]/30 focus:border-[#FF385C] transition shadow-xs"
@@ -95,28 +92,6 @@ export const UniversalErrorPage: React.FC<UniversalErrorPageProps> = ({
                 >
                   <ArrowRight className="w-4 h-4 stroke-[2.5]" />
                 </button>
-              </div>
-            </div>
-
-            {/* Quick Demo Booth Links */}
-            <div className="pt-1">
-              <span className="text-[10px] font-bold text-stone-400 block mb-1.5 ml-1">
-                Active Booth Keys:
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {['qr_oe234pwumurkd59y', 'qr_3m0hhmnnmurkd5l7'].map((sample) => (
-                  <button
-                    key={sample}
-                    type="button"
-                    onClick={() => {
-                      setInputKey(sample);
-                      onSearchKey(sample);
-                    }}
-                    className="text-[11px] font-mono font-bold bg-[#FAF4EE] hover:bg-stone-200 text-stone-700 border border-stone-200/90 px-3 py-1.5 rounded-xl transition active:scale-95"
-                  >
-                    {sample}
-                  </button>
-                ))}
               </div>
             </div>
 
@@ -140,7 +115,7 @@ export const UniversalErrorPage: React.FC<UniversalErrorPageProps> = ({
       {/* Footer */}
       <footer className="max-w-md w-full mx-auto text-center pb-2">
         <p className="text-[11px] text-stone-400 font-medium">
-          Powered by Qizine Universal Restaurant Experience
+          Powered by Qizine.in
         </p>
       </footer>
     </div>

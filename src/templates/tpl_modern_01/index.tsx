@@ -54,11 +54,14 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     }
   });
 
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState<boolean>(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
   // Dynamic Cafe Profile
   const cafeName = menu?.cafe_profile?.name || booth?.vendor_name || 'Qizine Dining';
-  const tableLocation = booth
-    ? `${booth.booth_label}${booth.zone ? ` • ${booth.zone}` : ''}`
-    : (menu?.cafe_profile?.address || 'Table T-1 • Main Dining Hall');
+  const tableLocation = booth?.booth_label
+    ? `Table ${booth.booth_label}${booth.zone ? ` • ${booth.zone}` : ''}`
+    : (menu?.cafe_profile?.address || '');
 
   // Current active category for Category Screen
   const activeCategory: MenuCategory = useMemo(() => {
@@ -87,8 +90,6 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     setActiveTab(tab);
     if (tab === 'home') {
       setCurrentScreen('home');
-    } else if (tab === 'menu') {
-      setCurrentScreen('category');
     } else if (tab === 'cart') {
       setCurrentScreen('cart');
     } else if (tab === 'profile') {
@@ -111,12 +112,12 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
   const handleSelectCategory = (categoryId: string) => {
     setSelectedCategoryId(categoryId);
     setCurrentScreen('category');
-    setActiveTab('menu');
+    setActiveTab('home');
   };
 
   const handleOpenMenu = () => {
     setCurrentScreen('category');
-    setActiveTab('menu');
+    setActiveTab('home');
   };
 
   // Open item detail screen
@@ -125,23 +126,23 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     setCurrentScreen('item_detail');
   };
 
-  // Quick add / customize from category list
+  // Quick add from category list: adds 1 amount directly to cart
   const handleQuickAdd = (item: MenuItem) => {
-    setSelectedItem(item);
-    if (item.addon_groups && item.addon_groups.length > 0) {
-      setCurrentScreen('customize');
-    } else {
-      addItem(item);
-    }
+    const defaultVarId =
+      item.variants && item.variants.length > 0
+        ? item.variants.find((v) => v.is_default)?.id || item.variants[0].id
+        : undefined;
+    addItem(item, defaultVarId);
   };
 
   // Add from item detail screen
   const handleAddToCartFromDetail = (
     item: MenuItem,
+    variantId: string | undefined,
     selectedAddons: SelectedAddon[],
     quantity: number
   ) => {
-    addItem(item, undefined, selectedAddons, undefined, quantity);
+    addItem(item, variantId, selectedAddons, undefined, quantity);
     setCurrentScreen('cart');
     setActiveTab('cart');
   };
@@ -149,16 +150,31 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
   // Add from customize screen
   const handleAddToCartFromCustomize = (
     item: MenuItem,
+    variantId: string | undefined,
     selectedAddons: SelectedAddon[],
     quantity: number
   ) => {
-    addItem(item, undefined, selectedAddons, undefined, quantity);
+    addItem(item, variantId, selectedAddons, undefined, quantity);
     setCurrentScreen('cart');
     setActiveTab('cart');
   };
 
   // Proceed to checkout handler
   const handleProceedToCheckout = async () => {
+    if (booth?.is_open === false) {
+      setCheckoutError(
+        `The shop is closed now. ${
+          booth.opening_time ? `Ordering resumes at ${booth.opening_time}.` : 'Please check back later.'
+        }`
+      );
+      return;
+    }
+
+    if (items.length === 0) return;
+
+    setIsSubmittingOrder(true);
+    setCheckoutError(null);
+
     const idempotencyKey =
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
@@ -166,24 +182,35 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
 
     const effectiveQrKey =
       booth?.qr_key ||
+      new URLSearchParams(window.location.search).get('qr_key') ||
       new URLSearchParams(window.location.search).get('booth') ||
       new URLSearchParams(window.location.search).get('qr') ||
-      'qr_default';
+      '';
 
     try {
       const payload = {
         qr_key: effectiveQrKey,
         idempotency_key: idempotencyKey,
         payment_method: 'UPI' as const,
-        items: items.map((i) => ({
-          item_id: i.item_id,
-          variant_id: i.variant_id,
-          quantity: i.quantity,
-          customizations: i.selected_addons.map((a) => ({
-            group_id: a.group_id,
-            option_id: a.id,
-          })),
-        })),
+        items: items.map((i) => {
+          let finalVariantId = i.variant_id;
+          if (!finalVariantId) {
+            const catalogItem = allCategories.flatMap((c) => c.items).find((ci) => ci.id === i.item_id);
+            if (catalogItem?.variants && catalogItem.variants.length > 0) {
+              finalVariantId =
+                catalogItem.variants.find((v) => v.is_default)?.id || catalogItem.variants[0].id;
+            }
+          }
+          return {
+            item_id: i.item_id,
+            variant_id: finalVariantId,
+            quantity: i.quantity,
+            customizations: i.selected_addons.map((a) => ({
+              group_id: a.group_id,
+              option_id: a.id,
+            })),
+          };
+        }),
       };
 
       const orderResult = await QizineApi.createOrder(payload, idempotencyKey);
@@ -191,25 +218,16 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
       setActiveOrder(orderResult);
       clearCart();
       setCurrentScreen('confirmation');
-    } catch (err) {
-      console.warn('[Modern01Template] Order API fallback active:', err);
-      // Fallback simulated order for demonstration if offline
-      const simulated: CreateOrderResponseData = {
-        order_id: `ord_${Date.now()}`,
-        order_no: Math.floor(10 + Math.random() * 89),
-        ref_token: Math.floor(1000 + Math.random() * 9000).toString(16).toUpperCase(),
-        status: 'ACCEPTED',
-        payment_status: 'SUCCESS',
-        total_paise: calculation.grand_total_paise,
-        currency: 'INR',
-        booth_label: booth?.booth_label || 'Table T-1',
-        serving_model: booth?.serving_model === 'DELIVERY' ? 'DELIVERY' : (booth?.serving_model === 'TAKEAWAY' ? 'SELF_SERVING' : 'WAITER_SERVING'),
-        upi_intent_uri: '',
-      };
-      localStorage.setItem('qizine_active_order', JSON.stringify(simulated));
-      setActiveOrder(simulated);
-      clearCart();
-      setCurrentScreen('confirmation');
+    } catch (err: any) {
+      console.error('[Modern01Template] Order API failed:', err);
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Unable to place order with kitchen. Please try again.';
+      setCheckoutError(errMsg);
+    } finally {
+      setIsSubmittingOrder(false);
     }
   };
 
@@ -220,8 +238,8 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     currentScreen === 'tracker';
 
   return (
-    <div className="min-h-screen bg-[#FAF4EE] selection:bg-[#FF385C]/20 selection:text-[#FF385C] flex flex-col justify-start">
-      <div className="w-full max-w-md sm:max-w-lg mx-auto min-h-screen bg-[#FAF4EE] relative flex flex-col shadow-2xl sm:my-4 sm:rounded-[36px] sm:border sm:border-stone-200/60 overflow-hidden">
+    <div className="min-h-screen bg-[#FAF9F7] selection:bg-[#C0192A]/20 selection:text-[#C0192A] flex flex-col justify-start">
+      <div className="w-full max-w-md sm:max-w-lg mx-auto min-h-screen bg-[#FAF9F7] relative flex flex-col shadow-2xl sm:my-4 sm:rounded-[36px] sm:border sm:border-stone-200/60 overflow-hidden">
         {/* 1. Home / Menu Screen */}
         {currentScreen === 'home' && (
           <HomeScreen
@@ -242,6 +260,11 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
               setActiveTab('cart');
             }}
             onOpenMenu={handleOpenMenu}
+            onOpenTracker={() => {
+              setCurrentScreen('tracker');
+              setActiveTab('profile');
+            }}
+            hasActiveOrder={Boolean(activeOrder)}
             cartCount={calculation.total_items_count}
           />
         )}
@@ -290,6 +313,12 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
             onProceedToCheckout={handleProceedToCheckout}
             cafeName={cafeName}
             tableLocation={tableLocation}
+            isOpen={booth?.is_open !== false}
+            openingTime={booth?.opening_time}
+            closingTime={booth?.closing_time}
+            isSubmitting={isSubmittingOrder}
+            errorMessage={checkoutError}
+            onClearError={() => setCheckoutError(null)}
           />
         )}
 
@@ -337,7 +366,7 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[500px]">
-              <div className="w-20 h-20 rounded-full bg-[#FF385C]/10 flex items-center justify-center text-[#FF385C] mb-5 shadow-sm">
+              <div className="w-20 h-20 rounded-full bg-[#C0192A]/10 flex items-center justify-center text-[#C0192A] mb-5 shadow-sm">
                 <UtensilsCrossed className="w-9 h-9" />
               </div>
               <h3 className="text-xl font-bold text-stone-900 tracking-tight">No Active Orders</h3>
@@ -349,7 +378,7 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
                   setCurrentScreen('home');
                   setActiveTab('home');
                 }}
-                className="mt-6 px-7 py-3 rounded-2xl bg-[#FF385C] text-white font-semibold text-sm shadow-md hover:bg-[#E02D50] active:scale-95 transition-all"
+                className="mt-6 px-7 py-3 rounded-2xl bg-[#C0192A] text-white font-semibold text-sm shadow-md hover:bg-[#A31423] active:scale-95 transition-all"
               >
                 Explore Menu
               </button>

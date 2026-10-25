@@ -194,32 +194,14 @@ export const QizineApi = {
       if (response.data?.data) {
         return response.data.data;
       }
-      throw new Error('Unexpected order response format');
-    } catch (err) {
-      if (ENV.ENABLE_MOCK_FALLBACK) {
-        console.warn(`[QizineApi] Order API unavailable, simulating instant order response.`);
-        await new Promise((res) => setTimeout(res, 600));
-
-        const orderNo = Math.floor(10 + Math.random() * 90);
-        const refToken = Math.floor(1000 + Math.random() * 9000).toString(16).toUpperCase();
-        const orderId = `ord_${Date.now()}`;
-        const totalPaise = 32400; // Simulated
-        const upiUri = `upi://pay?pa=chaibreak@icici&pn=ChaiBreakCafe&tr=${orderId}&am=${(totalPaise / 100).toFixed(2)}&cu=INR&tn=Order_${refToken}`;
-
-        return {
-          order_id: orderId,
-          order_no: orderNo,
-          ref_token: refToken,
-          status: 'INITIATED',
-          payment_status: 'PENDING',
-          total_paise: totalPaise,
-          currency: 'INR',
-          booth_label: 'Table 04',
-          serving_model: 'WAITER_SERVING',
-          upi_intent_uri: upiUri,
-        };
-      }
-      throw err;
+      throw new Error(response.data?.message || 'Unexpected order response format');
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Unable to process your order with the kitchen. Please try again.';
+      throw new Error(message);
     }
   },
 
@@ -227,27 +209,9 @@ export const QizineApi = {
    * View 6: Fetch Order Details
    */
   async getOrder(orderId: string, refToken?: string): Promise<CreateOrderResponseData> {
-    try {
-      const url = API_ENDPOINTS.ORDER_DETAIL(orderId, refToken);
-      const response = await apiClient.get<ApiResponse<CreateOrderResponseData>>(url);
-      return response.data.data;
-    } catch (err) {
-      if (ENV.ENABLE_MOCK_FALLBACK) {
-        return {
-          order_id: orderId,
-          order_no: 42,
-          ref_token: refToken || '7A29',
-          status: 'ACCEPTED',
-          payment_status: 'SUCCESS',
-          total_paise: 32400,
-          currency: 'INR',
-          booth_label: 'Table 04',
-          serving_model: 'WAITER_SERVING',
-          upi_intent_uri: '',
-        };
-      }
-      throw err;
-    }
+    const url = API_ENDPOINTS.ORDER_DETAIL(orderId, refToken);
+    const response = await apiClient.get<ApiResponse<CreateOrderResponseData>>(url);
+    return response.data.data;
   },
 
   /**
@@ -270,19 +234,11 @@ export const QizineApi = {
     type: string;
     custom_note?: string;
   }): Promise<boolean> {
-    try {
-      const response = await apiClient.post<ApiResponse<null>>(
-        API_ENDPOINTS.SERVICE_REQUEST,
-        payload
-      );
-      return response.data?.success ?? true;
-    } catch (err) {
-      if (ENV.ENABLE_MOCK_FALLBACK) {
-        console.log(`[QizineApi] Simulated service request acknowledged:`, payload);
-        return true;
-      }
-      throw err;
-    }
+    const response = await apiClient.post<ApiResponse<null>>(
+      API_ENDPOINTS.SERVICE_REQUEST,
+      payload
+    );
+    return response.data?.success ?? true;
   },
 
   /**

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useCartContext } from '../context/CartContext';
 import type { CreateOrderPayload, OrderResponse, QRBoothContext } from '../types/order.types';
+import { QizineApi } from '../api/axios';
 
 export interface UseCheckoutOptions {
   apiBaseUrl?: string;
@@ -54,72 +55,41 @@ export function useCheckout(options: UseCheckoutOptions = {}) {
       setSubmitting(true);
       setError(null);
 
-      const idempotencyKey = generateIdempotencyKey();
-
-      const payload: CreateOrderPayload = {
-        vendor_id: booth.vendor_id,
-        booth_id: booth.booth_id,
-        customer_name: customerDetails?.name,
-        customer_phone: customerDetails?.phone,
-        special_instructions: customerDetails?.instructions,
-        serving_model: booth.serving_model,
-        accept_order_type: booth.accept_order_type,
-        idempotency_key: idempotencyKey,
-        items: items.map((item) => ({
-          item_id: item.item_id,
-          name: item.name,
-          variant_id: item.variant_id,
-          variant_name: item.variant_name,
-          quantity: item.quantity,
-          unit_price_paise: item.unit_price_paise,
-          addons: item.selected_addons.map((a) => ({
-            id: a.id,
-            name: a.name,
-            price_paise: a.price_paise,
-          })),
-          special_instructions: item.special_instructions,
-        })),
-      };
-
       try {
-        // If an API endpoint is provided, make the HTTP call:
-        let responseData: OrderResponse;
+        const idempotencyKey = generateIdempotencyKey();
+        const result = await QizineApi.createOrder(
+          {
+            qr_key: booth.qr_key || '',
+            idempotency_key: idempotencyKey,
+            customer_name: customerDetails?.name,
+            customer_phone: customerDetails?.phone,
+            customer_note: customerDetails?.instructions,
+            payment_method: 'UPI',
+            items: items.map((item) => ({
+              item_id: item.item_id,
+              variant_id: item.variant_id,
+              quantity: item.quantity,
+              customizations: item.selected_addons.map((a) => ({
+                group_id: a.group_id,
+                option_id: a.id,
+              })),
+            })),
+          },
+          idempotencyKey
+        );
 
-        if (options.apiBaseUrl) {
-          const res = await fetch(`${options.apiBaseUrl}/api/v1/orders`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Idempotency-Key': idempotencyKey,
-            },
-            body: JSON.stringify(payload),
-          });
-
-          if (!res.ok) {
-            const errJson = await res.json().catch(() => ({}));
-            throw new Error(errJson.message || `Order placement failed with status ${res.status}`);
-          }
-          responseData = await res.json();
-        } else {
-          // Mock / Prototype simulated dispatch
-          await new Promise((resolve) => setTimeout(resolve, 800));
-          const simulatedRef = `#${Math.floor(1000 + Math.random() * 9000)}`;
-          const amountRupees = calculation.grand_total_paise / 100;
-          const upiUrl = generateUpiIntentUrl(amountRupees, simulatedRef);
-
-          responseData = {
-            order_id: `ord_${Date.now()}`,
-            ref_token: simulatedRef,
-            vendor_id: booth.vendor_id,
-            booth_id: booth.booth_id,
-            booth_label: booth.booth_label,
-            status: booth.accept_order_type === 'PREPAID' ? 'INITIATED' : 'ACCEPTED',
-            payment_status: booth.accept_order_type === 'PREPAID' ? 'PENDING' : 'PENDING',
-            upi_intent_url: upiUrl,
-            total_amount_paise: calculation.grand_total_paise,
-            created_at: new Date().toISOString(),
-          };
-        }
+        const responseData: OrderResponse = {
+          order_id: result.order_id,
+          ref_token: result.ref_token,
+          vendor_id: booth.vendor_id,
+          booth_id: booth.booth_id,
+          booth_label: result.booth_label || booth.booth_label,
+          status: result.status,
+          payment_status: result.payment_status,
+          upi_intent_url: result.upi_intent_uri,
+          total_amount_paise: result.total_paise,
+          created_at: new Date().toISOString(),
+        };
 
         setOrderResult(responseData);
         clearCart();

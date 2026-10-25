@@ -107,7 +107,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onOpenCustomise }) => 
               alt={item.name}
               loading="lazy"
               decoding="async"
-              className="w-full h-full max-w-full max-h-full object-cover block shrink-0"
+              className="w-full h-full max-w-full max-h-full object-cover rounded-2xl block shrink-0"
             />
           </div>
         ) : (

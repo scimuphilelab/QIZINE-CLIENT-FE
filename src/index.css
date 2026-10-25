@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #FF385C;
+  --color-primary: #C0192A;
   --color-primary-fg: #FFFFFF;
-  --color-secondary: #FF6B81;
+  --color-secondary: #DD2438;
   --color-secondary-fg: #FFFFFF;
-  --color-accent: #FF385C;
-  --color-background: #FAF4EE;
+  --color-accent: #C0192A;
+  --color-background: #FAF9F7;
   --color-surface: #FFFFFF;
-  --color-surface-alt: #F5EEE6;
+  --color-surface-alt: #FBF4EE;
   --color-text: #1A1A1A;
   --font-heading: 'Poppins', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-body: 'Poppins', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;

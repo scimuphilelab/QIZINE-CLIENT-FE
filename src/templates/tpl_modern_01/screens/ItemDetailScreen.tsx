@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Heart, Plus, Minus, Check, Flame, Clock, Star } from 'lucide-react';
+import { ArrowLeft, Plus, Minus, Check, Flame, Clock, Star } from 'lucide-react';
 import type { MenuItem, MenuItemAddon } from '../../../core/types/menu.types';
 import type { SelectedAddon } from '../../../core/types/order.types';
 import { useCart } from '../../../core/hooks/useCart';
@@ -8,17 +8,13 @@ import { getFoodImageFallback } from '../../../core/utils/imageFallback';
 export interface ItemDetailScreenProps {
   item: MenuItem;
   onBack: () => void;
-  onAddToCart: (item: MenuItem, selectedAddons: SelectedAddon[], quantity: number) => void;
+  onAddToCart: (
+    item: MenuItem,
+    variantId: string | undefined,
+    selectedAddons: SelectedAddon[],
+    quantity: number
+  ) => void;
 }
-
-const defaultIngredients = [
-  { name: 'Beef', icon: '🥩' },
-  { name: 'Cheese', icon: '🧀' },
-  { name: 'Onion', icon: '🧅' },
-  { name: 'Tomato', icon: '🍅' },
-  { name: 'Greens', icon: '🥬' },
-  { name: 'Egg', icon: '🥚' },
-];
 
 export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
   item,
@@ -26,9 +22,15 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
   onAddToCart,
 }) => {
   const { formatCurrency } = useCart();
-  const [isFavorite, setIsFavorite] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+
+  // Variants selection
+  const hasVariants = Boolean(item.variants && item.variants.length > 0);
+  const defaultVar = hasVariants
+    ? item.variants!.find((v) => v.is_default) || item.variants![0]
+    : undefined;
+  const [selectedVariant, setSelectedVariant] = useState(defaultVar);
 
   // Extract addons dynamically from MongoDB item document structure
   const firstAddonGroup = item.addon_groups?.[0];
@@ -52,25 +54,28 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
     }
   };
 
+  const baseUnitPricePaise = selectedVariant
+    ? selectedVariant.price_paise
+    : item.base_price_paise;
   const addonTotalPaise = selectedAddons.reduce((sum, a) => sum + a.price_paise, 0);
-  const totalUnitPricePaise = item.base_price_paise + addonTotalPaise;
+  const totalUnitPricePaise = baseUnitPricePaise + addonTotalPaise;
   const grandTotalPaise = totalUnitPricePaise * quantity;
 
   const handleAdd = () => {
-    onAddToCart(item, selectedAddons, quantity);
+    onAddToCart(item, selectedVariant?.id, selectedAddons, quantity);
   };
 
   const imageUrl = item.images?.[0]?.url || getFoodImageFallback(item.name);
   const subLabel =
     item.short_name ||
     item.tags?.[0] ||
-    (item.diet_type === 'VEG' ? 'Pure Vegetarian' : 'Chef Special');
+    (item.diet_type === 'VEG' ? 'Pure Vegetarian' : item.diet_type === 'NON_VEG' ? 'Non-Vegetarian' : item.diet_type || '');
 
   return (
-    <div className="min-h-screen bg-[#FAF4EE] text-stone-900 font-sans flex flex-col justify-between selection:bg-[#FF385C]/20 selection:text-[#FF385C]">
+    <div className="min-h-screen bg-[#FAF9F7] text-stone-900 font-sans flex flex-col justify-between selection:bg-[#C0192A]/20 selection:text-[#C0192A]">
       {/* Top Hero Gradient Area (Matching mockup Screen 2) */}
       <div className="relative bg-gradient-to-b from-[#FF5238] via-[#FF693C] to-[#FFA048] pt-4 pb-12 px-5 rounded-b-[40px] shadow-sm">
-        {/* Top Navigation Row: Circular White Back and Heart Buttons */}
+        {/* Top Navigation Row: Circular White Back Button */}
         <div className="flex items-center justify-between mb-2">
           <button
             onClick={onBack}
@@ -79,20 +84,7 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
           >
             <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
           </button>
-
-          <button
-            onClick={() => setIsFavorite(!isFavorite)}
-            className="w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-            aria-label="Favorite"
-          >
-            <Heart
-              className={`w-5 h-5 transition-transform active:scale-125 ${
-                isFavorite
-                  ? 'fill-[#FF385C] text-[#FF385C]'
-                  : 'text-[#FF385C] stroke-[2]'
-              }`}
-            />
-          </button>
+          <div className="w-11 h-11" />
         </div>
 
         {/* Large Food Image Centered in Hero Banner with Fixed Sizing & Rounded Corners */}
@@ -119,9 +111,11 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
               <h1 className="font-black text-2xl sm:text-3xl text-stone-900 leading-tight tracking-tight">
                 {item.name}
               </h1>
-              <p className="text-sm sm:text-base text-stone-400 font-semibold mt-1">
-                {subLabel}
-              </p>
+              {subLabel && (
+                <p className="text-sm sm:text-base text-stone-400 font-semibold mt-1">
+                  {subLabel}
+                </p>
+              )}
             </div>
 
             {/* Stepper Pill [ - 03 + ] */}
@@ -146,52 +140,121 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
             </div>
           </div>
 
-          {/* Stats Row (Rating, Calories, Prep Time) */}
-          <div className="flex items-center space-x-3 pt-1">
-            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-stone-800 bg-stone-50 border border-stone-200/60 px-3.5 py-1.5 rounded-full">
-              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-              <span>4.9</span>
-            </div>
+          {/* Dynamic Badges Row (Diet, Prep Time, Calories, Spice) */}
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {item.diet_type && (
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-stone-800 bg-stone-50 border border-stone-200/60 px-3.5 py-1.5 rounded-full">
+                <span
+                  className={`w-2.5 h-2.5 rounded-full ${
+                    item.diet_type === 'VEG' || item.diet_type === 'VEGAN'
+                      ? 'bg-emerald-500'
+                      : 'bg-red-500'
+                  }`}
+                />
+                <span>{item.diet_type === 'VEG' ? 'Pure Veg' : item.diet_type === 'VEGAN' ? 'Vegan' : 'Non-Veg'}</span>
+              </div>
+            )}
 
-            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-stone-800 bg-stone-50 border border-stone-200/60 px-3.5 py-1.5 rounded-full">
-              <Flame className="w-4 h-4 text-[#FF385C]" />
-              <span>150 Kcal</span>
-            </div>
+            {Boolean(item.prep_time_minutes) && (
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-stone-800 bg-stone-50 border border-stone-200/60 px-3.5 py-1.5 rounded-full">
+                <Clock className="w-4 h-4 text-stone-500" />
+                <span>{item.prep_time_minutes} Mins</span>
+              </div>
+            )}
 
-            <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-stone-800 bg-stone-50 border border-stone-200/60 px-3.5 py-1.5 rounded-full">
-              <Clock className="w-4 h-4 text-stone-500" />
-              <span>20-30 Min</span>
-            </div>
+            {item.spice_level && (
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-stone-800 bg-stone-50 border border-stone-200/60 px-3.5 py-1.5 rounded-full">
+                <Flame className="w-4 h-4 text-[#FF385C]" />
+                <span>Spice: {item.spice_level}</span>
+              </div>
+            )}
           </div>
 
-          {/* Ingredients Section */}
-          <div className="pt-2">
-            <h3 className="font-black text-base sm:text-lg text-stone-900 mb-3 tracking-tight">
-              Ingredients
-            </h3>
-            <div className="flex items-center space-x-3 overflow-x-auto no-scrollbar py-0.5">
-              {defaultIngredients.map((ing) => (
-                <div
-                  key={ing.name}
-                  className="w-13 h-13 rounded-2xl bg-[#FAF4EE] border border-stone-200/60 flex items-center justify-center text-2xl shadow-2xs hover:scale-105 transition-transform shrink-0"
-                  title={ing.name}
-                >
-                  <span>{ing.icon}</span>
-                </div>
-              ))}
+          {/* Dynamic Variants / Portion Selection */}
+          {hasVariants && (
+            <div className="pt-2">
+              <h3 className="font-black text-sm sm:text-base text-stone-900 mb-2.5 tracking-tight flex items-center justify-between">
+                <span>Select Portion / Size</span>
+                <span className="text-[10px] font-extrabold text-[#FF385C] uppercase tracking-wider bg-red-50 border border-red-100 px-2 py-0.5 rounded-md">
+                  Required
+                </span>
+              </h3>
+              <div className="grid grid-cols-2 gap-2.5">
+                {item.variants!.map((variant) => {
+                  const isSelected = selectedVariant?.id === variant.id;
+                  return (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      onClick={() => setSelectedVariant(variant)}
+                      className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        isSelected
+                          ? 'border-[#FF385C] bg-red-50/50 shadow-xs ring-1 ring-[#FF385C]'
+                          : 'border-stone-200/80 bg-stone-50/60 hover:bg-stone-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full mb-1">
+                        <span className={`text-xs sm:text-sm font-black truncate ${isSelected ? 'text-[#FF385C]' : 'text-stone-900'}`}>
+                          {variant.name}
+                        </span>
+                        <div
+                          className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                            isSelected
+                              ? 'border-[#FF385C] bg-[#FF385C]'
+                              : 'border-stone-300 bg-white'
+                          }`}
+                        >
+                          {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                      <span className="text-xs font-black text-stone-800">
+                        {formatCurrency(variant.price_paise)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Description Section */}
-          <div className="pt-2">
-            <h3 className="font-black text-base sm:text-lg text-stone-900 mb-2 tracking-tight">
-              Description
-            </h3>
-            <p className="text-sm sm:text-base text-stone-600 leading-relaxed font-normal">
-              {item.description ||
-                'Crafted using 100% premium quality ingredients with delicious signature sauce, fresh crisp vegetables, secret spices, and toasted artisan buns for an unforgettable dining experience!'}
-            </p>
-          </div>
+          {Boolean(item.description) && (
+            <div className="pt-2">
+              <h3 className="font-black text-base sm:text-lg text-stone-900 mb-2 tracking-tight">
+                Description
+              </h3>
+              <p className="text-sm sm:text-base text-stone-600 leading-relaxed font-normal">
+                {item.description}
+              </p>
+            </div>
+          )}
+
+          {/* Allergens & Dietary Information */}
+          {((item.allergens && item.allergens.length > 0) || (item.tags && item.tags.length > 0)) && (
+            <div className="pt-2">
+              <h3 className="font-black text-xs sm:text-sm text-stone-900 mb-2 tracking-tight">
+                Allergen & Dietary Information
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {item.allergens?.map((alg) => (
+                  <span
+                    key={alg}
+                    className="bg-amber-50 text-amber-900 border border-amber-200/70 text-xs font-semibold px-2.5 py-1 rounded-xl"
+                  >
+                    Contains: {alg}
+                  </span>
+                ))}
+                {item.tags?.map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-stone-100 text-stone-600 text-[11px] font-semibold px-2.5 py-1 rounded-xl"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Optional Add-ons / Customizations */}
           {availableAddons.length > 0 && (
@@ -248,7 +311,7 @@ export const ItemDetailScreen: React.FC<ItemDetailScreenProps> = ({
 
           <button
             onClick={handleAdd}
-            className="flex-1 max-w-[210px] sm:max-w-[250px] py-4 px-6 bg-[#FF385C] hover:bg-[#E0294C] text-white font-extrabold text-base rounded-2xl shadow-lg shadow-red-500/25 active:scale-95 transition-all flex items-center justify-center"
+            className="flex-1 max-w-[210px] sm:max-w-[250px] py-4 px-6 bg-[#C0192A] hover:bg-[#A31423] text-white font-extrabold text-base rounded-2xl shadow-lg shadow-red-600/25 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
           >
             Add to Cart
           </button>
