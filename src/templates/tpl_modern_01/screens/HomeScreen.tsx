@@ -1,23 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import {
   Search,
-  SlidersHorizontal,
-  Menu,
+  Mic,
+  X,
+  ChevronDown,
+  BookOpen,
+  Utensils,
   Bell,
   ShoppingBag,
-  Plus,
-  X,
-  ArrowRight,
   Store,
   MapPin,
-  Phone,
-  ShieldCheck,
   Clock,
 } from 'lucide-react';
 import type { MenuItem, MenuCategory, MenuSection, MongoMenuDocument } from '../../../core/types/menu.types';
 import type { QRBoothContext } from '../../../core/types/order.types';
-import { useCart } from '../../../core/hooks/useCart';
-import { getFoodImageFallback, DEFAULT_FOOD_IMAGE } from '../../../core/utils/imageFallback';
+import { CategoryPill } from '../components/CategoryPill';
+import { ItemListItem } from '../components/ItemListItem';
+import { MenuDrawer } from '../components/MenuDrawer';
+import { BottomCartBar } from '../components/BottomCartBar';
 
 export interface HomeScreenProps {
   menu?: MongoMenuDocument | null;
@@ -26,90 +26,103 @@ export interface HomeScreenProps {
   onSelectSection: (sectionId: string) => void;
   categories: MenuCategory[];
   allCategories: MenuCategory[];
-  popularItems: MenuItem[];
   booth?: QRBoothContext;
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  onSelectCategory: (categoryId: string) => void;
   onSelectItem: (item: MenuItem) => void;
-  onOpenCart?: () => void;
-  onOpenMenu?: () => void;
-  onOpenTracker?: () => void;
+  onOpenCart: () => void;
+  onOpenTracker: () => void;
   hasActiveOrder?: boolean;
   cartCount?: number;
 }
 
-const getCategoryIcon = (catName: string, catId: string): string => {
-  const text = `${catName} ${catId}`.toLowerCase();
-  if (text.includes('burger')) return '🍔';
-  if (text.includes('chicken') || text.includes('poultry')) return '🍗';
-  if (text.includes('fry') || text.includes('fries') || text.includes('appetizer') || text.includes('snack') || text.includes('starter')) return '🍟';
-  if (text.includes('shake') || text.includes('smoothie')) return '🥤';
-  if (text.includes('mocktail') || text.includes('cooler') || text.includes('cocktail') || text.includes('mojito')) return '🍹';
-  if (text.includes('tea') || text.includes('chai') || text.includes('coffee') || text.includes('brew')) return '☕';
-  if (text.includes('drink') || text.includes('beverage')) return '🥤';
-  if (text.includes('pizza')) return '🍕';
-  if (text.includes('dessert') || text.includes('cake') || text.includes('sweet') || text.includes('ice') || text.includes('treat')) return '🍦';
-  if (text.includes('salad') || text.includes('green') || text.includes('healthy')) return '🥗';
-  if (text.includes('sandwich') || text.includes('wrap') || text.includes('roll')) return '🥪';
-  if (text.includes('biryani') || text.includes('rice') || text.includes('curry') || text.includes('bowl') || text.includes('meal')) return '🍲';
-  return '🍽️';
-};
+export type SortOption = 'relevance' | 'price_asc' | 'price_desc';
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   menu,
   sections = [],
-  allCategories,
-  popularItems = [],
+  selectedSectionId,
+  onSelectSection,
+  allCategories = [],
   booth,
   searchQuery,
   onSearchChange,
   onSelectItem,
-  onOpenMenu,
   onOpenCart,
   onOpenTracker,
   hasActiveOrder = false,
   cartCount = 0,
 }) => {
-  const { addItem, formatCurrency } = useCart();
-  const [logoError, setLogoError] = useState(false);
+  // Category selection (defaults to first category or 'all')
   const [selectedCatId, setSelectedCatId] = useState<string>('all');
-  const [showVendorModal, setShowVendorModal] = useState<boolean>(false);
-  const [failedCatImages, setFailedCatImages] = useState<Record<string, boolean>>({});
+  // Veg-only toggle switch state (matching VEG toggle on top right of screenshot)
+  const [vegOnly, setVegOnly] = useState<boolean>(false);
+  // Sort option state
+  const [sortBy, setSortBy] = useState<SortOption>('relevance');
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState<boolean>(false);
+  // Menu Directory Drawer state
+  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState<boolean>(false);
+  // Store info modal state
+  const [showStoreInfo, setShowStoreInfo] = useState<boolean>(false);
 
   // Dynamic Cafe Profile
-  const cafeName = menu?.cafe_profile?.name || booth?.vendor_name || 'Qizine Dining';
-  const tableLocation = booth
-    ? `${booth.booth_label}${booth.zone ? ` • ${booth.zone}` : ''}`
-    : (menu?.cafe_profile?.address || '');
+  const cafeName = menu?.cafe_profile?.name || booth?.vendor_name || 'Qizine Restaurant';
+  const tableLabel = booth?.booth_label ? `Table ${booth.booth_label}` : 'Dine-In';
+  const tableZone = booth?.zone ? ` • ${booth.zone}` : '';
 
-  const handleQuickAdd = (item: MenuItem, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const defaultVarId =
-      item.variants && item.variants.length > 0
-        ? item.variants.find((v) => v.is_default)?.id || item.variants[0].id
-        : undefined;
-    addItem(item, defaultVarId);
-  };
+  // Get active section categories or all categories
+  const activeSectionCategories = useMemo(() => {
+    if (!selectedSectionId || selectedSectionId === 'ALL') {
+      return allCategories;
+    }
+    const currentSection = sections.find((s) => s.id === selectedSectionId);
+    return currentSection ? currentSection.categories : allCategories;
+  }, [sections, selectedSectionId, allCategories]);
 
-  // Categories list with dynamic icon or dish image
-  const displayCategories = useMemo(() => {
-    return [
-      { id: 'all', name: 'All', icon: '🍽️' },
-      ...allCategories.map((c) => ({
+  // Categories for the circular carousel (with dish images extracted from first item with image)
+  const circularCategories = useMemo(() => {
+    const cats = activeSectionCategories.map((c) => {
+      // Find real image from category image_url or first item with image
+      const dishWithImg = c.items?.find((i) => i.images && i.images.length > 0 && i.images[0]?.url);
+      const imgUrl = c.image_url || dishWithImg?.images?.[0]?.url;
+      return {
         id: c.id,
         name: c.name,
-        icon: getCategoryIcon(c.name, c.id),
-      })),
+        imageUrl: imgUrl,
+        itemsCount: c.items?.length || 0,
+      };
+    });
+
+    // Add 'All' as the very first circular category
+    const allDishes = activeSectionCategories.flatMap((c) => c.items);
+    const firstDishImg = allDishes.find((i) => i.images && i.images.length > 0 && i.images[0]?.url)?.images?.[0]?.url;
+
+    return [
+      {
+        id: 'all',
+        name: 'All Items',
+        imageUrl: firstDishImg || menu?.cafe_profile?.logo_url,
+        itemsCount: allDishes.length,
+      },
+      ...cats,
     ];
-  }, [allCategories]);
+  }, [activeSectionCategories, menu]);
 
-  // Flatten items for active category filter or search
+  // Flatten and filter items
   const isSearching = searchQuery.trim().length > 0;
-  const filteredItems = useMemo(() => {
-    let items = allCategories.flatMap((c) => c.items);
 
-    // Deduplicate items by ID if present across categories
+  const displayedItems = useMemo(() => {
+    // 1. Gather candidate items from active section and selected category
+    let items: MenuItem[] = [];
+
+    if (selectedCatId === 'all') {
+      items = activeSectionCategories.flatMap((c) => c.items || []);
+    } else {
+      const activeCat = activeSectionCategories.find((c) => c.id === selectedCatId);
+      items = activeCat?.items ? [...activeCat.items] : [];
+    }
+
+    // Deduplicate by item ID
     const seen = new Set<string>();
     items = items.filter((item) => {
       if (seen.has(item.id)) return false;
@@ -117,9 +130,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       return true;
     });
 
+    // 2. Apply Veg-only filter if toggled
+    if (vegOnly) {
+      items = items.filter(
+        (item) => item.diet_type === 'VEG' || item.diet_type === 'VEGAN'
+      );
+    }
+
+    // 3. Apply Search query
     if (isSearching) {
       const q = searchQuery.toLowerCase().trim();
-      return items.filter(
+      items = items.filter(
         (item) =>
           item.name.toLowerCase().includes(q) ||
           (item.short_name && item.short_name.toLowerCase().includes(q)) ||
@@ -128,577 +149,398 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       );
     }
 
-    if (selectedCatId !== 'all') {
-      const activeCat = allCategories.find((c) => c.id === selectedCatId);
-      return activeCat ? activeCat.items : items;
+    // 4. Apply Sorting
+    if (sortBy === 'price_asc') {
+      items.sort((a, b) => a.base_price_paise - b.base_price_paise);
+    } else if (sortBy === 'price_desc') {
+      items.sort((a, b) => b.base_price_paise - a.base_price_paise);
     }
 
     return items;
-  }, [allCategories, selectedCatId, searchQuery, isSearching]);
+  }, [
+    activeSectionCategories,
+    selectedCatId,
+    vegOnly,
+    searchQuery,
+    isSearching,
+    sortBy,
+  ]);
+
+  // Active category display title
+  const activeCategoryTitle = useMemo(() => {
+    if (isSearching) return `Search Results (${displayedItems.length})`;
+    if (selectedCatId === 'all') {
+      if (selectedSectionId && selectedSectionId !== 'ALL') {
+        const sec = sections.find((s) => s.id === selectedSectionId);
+        return sec ? `${sec.name} (${displayedItems.length})` : 'All Items';
+      }
+      return `${displayedItems.length} items to explore`;
+    }
+    const cat = allCategories.find((c) => c.id === selectedCatId);
+    return cat ? `${cat.name} (${displayedItems.length})` : `${displayedItems.length} items to explore`;
+  }, [isSearching, selectedCatId, selectedSectionId, sections, allCategories, displayedItems.length]);
 
   return (
-    <div className="flex-1 bg-[#FAF9F7] text-stone-900 pb-28 font-sans px-4 sm:px-6 pt-5 transition-colors">
-      {/* 1. Header (Matching Chick-fil-A reference style) */}
-      <div className="flex items-center justify-between mb-4 gap-2">
-        {/* Left: Squircle Hamburger Menu Button */}
+    <div className="flex-1 bg-[#FAF9F7] text-stone-900 pb-28 font-sans transition-colors">
+      {/* 1. Top Store & Table Info Bar */}
+      <header className="px-4 sm:px-6 pt-3 pb-2.5 flex items-center justify-between border-b border-stone-200/50 bg-white">
         <button
-          onClick={() => setShowVendorModal(true)}
-          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white border border-stone-200/60 shadow-xs flex items-center justify-center text-stone-800 hover:text-[#C0192A] active:scale-95 transition-all shrink-0 cursor-pointer"
-          aria-label="Restaurant Profile"
+          onClick={() => setShowStoreInfo(true)}
+          type="button"
+          className="flex items-center gap-2.5 text-left group cursor-pointer"
         >
-          <Menu className="w-5 h-5 stroke-[2.2]" />
-        </button>
-
-        {/* Center: Greeting & Stylized Cafe Brand Name */}
-        <button
-          onClick={() => setShowVendorModal(true)}
-          className="flex flex-col items-center justify-center text-center px-1 flex-1 min-w-0 cursor-pointer group"
-        >
-          <div className="text-[11px] sm:text-xs font-semibold text-stone-500 flex items-center gap-1">
-            <span>{booth?.booth_label ? `Table ${booth.booth_label}` : 'Welcome'}</span>
-            <span>👋</span>
+          <div className="w-8.5 h-8.5 rounded-full bg-[#FFF4EE] text-[#FF5722] flex items-center justify-center font-bold shadow-2xs">
+            <Store className="w-4.5 h-4.5 stroke-[2.2]" />
           </div>
-
-          <div className="flex items-center justify-center gap-1 mt-0.5 max-w-full">
-            <span className="font-serif font-black text-xl sm:text-2xl text-[#C0192A] tracking-tight italic leading-tight">
+          <div>
+            <h1 className="font-heading font-black text-[15px] sm:text-[17px] text-stone-900 leading-tight group-hover:text-[#FF5722] transition-colors truncate max-w-[200px] tracking-tight">
               {cafeName}
-            </span>
+            </h1>
+            <p className="font-sans text-[11px] font-semibold text-stone-500">
+              {tableLabel}
+              {tableZone}
+            </p>
           </div>
-
-          {menu?.cafe_profile?.tagline && (
-            <div className="text-[10px] sm:text-[11px] text-stone-500 font-medium tracking-tight line-clamp-1">
-              {menu.cafe_profile.tagline}
-            </div>
-          )}
         </button>
 
-        {/* Right: Notifications Bell + Cart Bag Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Notification Button */}
+        <div className="flex items-center gap-2">
+          {/* Live Order Tracker Trigger (pulsing when active order exists) */}
           <button
             onClick={onOpenTracker}
-            className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white border border-stone-200/60 shadow-xs flex items-center justify-center text-stone-800 hover:text-[#C0192A] active:scale-95 transition-all cursor-pointer"
-            aria-label="Active Orders"
+            type="button"
+            className="relative w-10 h-10 rounded-full bg-stone-50 hover:bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-700 active:scale-95 transition"
+            aria-label="Track Active Order"
+            title="Track Order"
           >
-            <Bell className="w-5 h-5 stroke-[2.2]" />
+            <Bell className="w-4.5 h-4.5 stroke-[2.2]" />
             {hasActiveOrder && (
-              <span className="absolute -top-1 -right-1 bg-[#C0192A] text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white shadow-xs animate-pulse">
-                1
-              </span>
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#FF5722] ring-2 ring-white animate-pulse" />
             )}
           </button>
 
-          {/* Cart Bag Button */}
+          {/* Cart Bag Trigger */}
           <button
             onClick={onOpenCart}
-            className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white border border-stone-200/60 shadow-xs flex items-center justify-center text-stone-800 hover:text-[#C0192A] active:scale-95 transition-all cursor-pointer"
-            aria-label="Cart"
+            type="button"
+            className="relative w-10 h-10 rounded-full bg-stone-50 hover:bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-700 active:scale-95 transition"
+            aria-label="View Basket"
+            title="Basket"
           >
-            <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
+            <ShoppingBag className="w-4.5 h-4.5 stroke-[2.2]" />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#C0192A] text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center ring-2 ring-white shadow-xs">
+              <span className="absolute -top-1 -right-1 bg-[#FF5722] text-white text-[10px] font-heading font-black w-4.5 h-4.5 rounded-full flex items-center justify-center ring-2 ring-white shadow-xs">
                 {cartCount}
               </span>
             )}
           </button>
         </div>
+      </header>
+
+      {/* 2. Search Bar & VEG Switch Row (Exact Reference Screenshot Layout) */}
+      <div className="px-4 sm:px-6 pt-3.5 pb-2.5 bg-white">
+        <div className="flex items-center gap-2.5">
+          {/* Main Search Pill Input */}
+          <div className="relative flex-1 bg-white border border-stone-200 rounded-full shadow-2xs flex items-center px-3.5 py-2 hover:border-stone-300 focus-within:border-[#FF5722] focus-within:ring-2 focus-within:ring-[#FF5722]/15 transition-all">
+            <Search className="w-4.5 h-4.5 text-stone-400 shrink-0 mr-2" />
+            <input
+              type="text"
+              placeholder="Search for 'Pizza', 'Burger'..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full bg-transparent font-sans text-xs sm:text-sm font-medium text-stone-900 placeholder-stone-400 focus:outline-none"
+            />
+            {searchQuery ? (
+              <button
+                onClick={() => onSearchChange('')}
+                className="p-1 text-stone-400 hover:text-stone-700 transition"
+                aria-label="Clear Search"
+              >
+                <X className="w-3.5 h-3.5 stroke-[2.5]" />
+              </button>
+            ) : null}
+
+            {/* Vertical Separator */}
+            <div className="h-4 w-px bg-stone-200 mx-2 shrink-0" />
+
+            {/* Mic / Voice Icon in Orange (Matching Screenshot) */}
+            <button
+              type="button"
+              className="text-[#FF5722] hover:opacity-80 p-0.5 shrink-0"
+              aria-label="Voice Search"
+            >
+              <Mic className="w-4.5 h-4.5 stroke-[2.2]" />
+            </button>
+          </div>
+
+          {/* Dedicated VEG Switch Badge (Matching Screenshot Top Right) */}
+          <button
+            type="button"
+            onClick={() => setVegOnly((prev) => !prev)}
+            className={`flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl border transition-all active:scale-95 select-none shrink-0 ${
+              vegOnly
+                ? 'bg-emerald-50 border-emerald-500 shadow-xs ring-1 ring-emerald-500/20'
+                : 'bg-stone-50 border-stone-200 hover:bg-stone-100 text-stone-600'
+            }`}
+            title="Filter pure vegetarian items"
+          >
+            <span className={`font-heading text-[10px] font-black tracking-wider leading-none mb-1 ${vegOnly ? 'text-emerald-700' : 'text-stone-600'}`}>
+              VEG
+            </span>
+            <div
+              className={`w-6 h-3 rounded-full flex items-center p-0.5 transition-colors ${
+                vegOnly ? 'bg-emerald-600 justify-end' : 'bg-stone-300 justify-start'
+              }`}
+            >
+              <div className="w-2 h-2 rounded-full bg-white shadow-xs" />
+            </div>
+          </button>
+        </div>
       </div>
 
-      {/* 2. Search Input Bar with Filter Button (Matching reference) */}
-      <div className="relative mb-5 flex items-center gap-2.5">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-3.5 w-5 h-5 text-stone-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search your favorite meal..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-white rounded-2xl pl-11 pr-10 py-3.5 text-sm sm:text-base text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-[#C0192A]/20 border border-stone-200/60 shadow-xs transition"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => onSearchChange('')}
-              className="absolute right-3.5 top-3.5 text-stone-400 hover:text-stone-700"
-              aria-label="Clear search"
-            >
-              <X className="w-4 h-4 stroke-[2.5]" />
-            </button>
+      {/* 3. Horizontal Section Tabs (Matching Screenshot Under Search Bar) */}
+      <nav className="bg-white border-b border-stone-200/60 px-4 sm:px-6 py-2 overflow-x-auto no-scrollbar">
+        <div className="flex items-center space-x-5 min-w-max">
+          {/* 'All' Tab */}
+          <button
+            type="button"
+            onClick={() => {
+              onSelectSection('ALL');
+              setSelectedCatId('all');
+            }}
+            className={`pb-1.5 font-heading text-xs sm:text-sm font-bold tracking-tight transition-all relative whitespace-nowrap cursor-pointer ${
+              !selectedSectionId || selectedSectionId === 'ALL'
+                ? 'text-[#FF5722]'
+                : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            All
+            {(!selectedSectionId || selectedSectionId === 'ALL') && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF5722] rounded-full animate-in fade-in" />
+            )}
+          </button>
+
+          {/* Section Tabs from MongoDB */}
+          {sections.map((sec) => {
+            const isActive = selectedSectionId === sec.id;
+            return (
+              <button
+                key={sec.id}
+                type="button"
+                onClick={() => {
+                  onSelectSection(sec.id);
+                  setSelectedCatId('all');
+                }}
+                className={`pb-1.5 font-heading text-xs sm:text-sm font-bold tracking-tight transition-all relative whitespace-nowrap cursor-pointer ${
+                  isActive ? 'text-[#FF5722]' : 'text-stone-500 hover:text-stone-800'
+                }`}
+              >
+                {sec.name}
+                {isActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#FF5722] rounded-full animate-in fade-in" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* 4. Circular Categories Row (Exact Match to Screenshot) */}
+      {!isSearching && circularCategories.length > 0 && (
+        <div className="bg-white px-4 sm:px-6 pt-4 pb-3 border-b border-stone-100">
+          <div className="flex items-center space-x-4 overflow-x-auto no-scrollbar py-1">
+            {circularCategories.map((cat) => {
+              const isSelected = selectedCatId === cat.id;
+              return (
+                <CategoryPill
+                  key={cat.id}
+                  id={cat.id}
+                  name={cat.name}
+                  imageUrl={cat.imageUrl}
+                  isSelected={isSelected}
+                  onClick={() => setSelectedCatId(cat.id)}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 5. Results Counter & Sorting Bar (Matching Screenshot: "125 restaurants to explore | Relevance ⌵") */}
+      <div className="px-4 sm:px-6 py-3.5 flex items-center justify-between">
+        <h2 className="font-heading font-extrabold text-base sm:text-lg text-stone-900 tracking-tight">
+          {activeCategoryTitle}
+        </h2>
+
+        {/* Sort Selector Dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsSortDropdownOpen((prev) => !prev)}
+            className="flex items-center gap-1 font-heading text-xs font-bold text-stone-700 bg-white border border-stone-200/80 px-2.5 py-1.5 rounded-xl shadow-2xs hover:bg-stone-50 active:scale-95 transition"
+          >
+            <span>
+              {sortBy === 'relevance'
+                ? 'Relevance'
+                : sortBy === 'price_asc'
+                ? 'Price: Low'
+                : 'Price: High'}
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-stone-500" />
+          </button>
+
+          {isSortDropdownOpen && (
+            <div className="absolute right-0 top-full mt-1.5 w-36 bg-white rounded-xl shadow-lg border border-stone-200 py-1 z-30 animate-in fade-in zoom-in-95">
+              <button
+                type="button"
+                onClick={() => {
+                  setSortBy('relevance');
+                  setIsSortDropdownOpen(false);
+                }}
+                className={`w-full text-left px-3 py-1.5 font-heading text-xs font-semibold hover:bg-stone-50 ${
+                  sortBy === 'relevance' ? 'text-[#FF5722] font-black' : 'text-stone-700'
+                }`}
+              >
+                Relevance
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSortBy('price_asc');
+                  setIsSortDropdownOpen(false);
+                }}
+                className={`w-full text-left px-3 py-1.5 font-heading text-xs font-semibold hover:bg-stone-50 ${
+                  sortBy === 'price_asc' ? 'text-[#FF5722] font-black' : 'text-stone-700'
+                }`}
+              >
+                Price: Low to High
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSortBy('price_desc');
+                  setIsSortDropdownOpen(false);
+                }}
+                className={`w-full text-left px-3 py-1.5 font-heading text-xs font-semibold hover:bg-stone-50 ${
+                  sortBy === 'price_desc' ? 'text-[#FF5722] font-black' : 'text-stone-700'
+                }`}
+              >
+                Price: High to Low
+              </button>
+            </div>
           )}
         </div>
+      </div>
+
+      {/* 6. Production-Grade List View for Items (PDF-Menu Modernization, NO Box Grids!) */}
+      <main className="px-4 sm:px-6">
+        {displayedItems.length === 0 ? (
+          <div className="bg-white rounded-3xl p-8 text-center border border-stone-200/70 shadow-xs my-4">
+            <span className="text-4xl mb-2 inline-block">🍽️</span>
+            <p className="font-heading text-base font-extrabold text-stone-800">No items available</p>
+            <p className="font-sans text-xs sm:text-sm text-stone-400 mt-1">
+              {vegOnly
+                ? 'No vegetarian items found in this section. Try turning off the VEG filter.'
+                : 'Try exploring other categories or clearing your search.'}
+            </p>
+            {vegOnly && (
+              <button
+                type="button"
+                onClick={() => setVegOnly(false)}
+                className="mt-4 px-4 py-2 rounded-xl bg-stone-900 text-white font-heading text-xs font-bold hover:bg-stone-800 transition"
+              >
+                Show All Items
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl shadow-xs border border-stone-200/70 overflow-hidden divide-y divide-stone-100">
+            {displayedItems.map((item) => (
+              <ItemListItem
+                key={item.id}
+                item={item}
+                onClick={() => onSelectItem(item)}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* 7. Floating Food Menu Button in Bottom Right Corner (Squircle 25% radius, White, Utensils Icon, No Text) */}
+      <div
+        className={`fixed right-4 z-40 sm:right-6 transition-all duration-300 ${
+          cartCount > 0 ? 'bottom-22 sm:bottom-24' : 'bottom-6 sm:bottom-8'
+        }`}
+      >
         <button
-          onClick={onOpenMenu}
-          className="w-12 h-12 rounded-2xl bg-white border border-stone-200/60 shadow-xs flex items-center justify-center text-stone-700 hover:text-[#C0192A] hover:border-[#C0192A]/40 active:scale-95 transition-all shrink-0 cursor-pointer"
-          aria-label="Filters & Menu"
+          type="button"
+          onClick={() => setIsMenuDrawerOpen(true)}
+          className="w-14 h-14 sm:w-15 sm:h-15 rounded-[16px] bg-white hover:bg-stone-50 text-[#FF5722] shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-stone-200/90 flex items-center justify-center active:scale-90 transition-all cursor-pointer group"
+          aria-label="Open Menu Directory"
+          title="Menu Directory"
         >
-          <SlidersHorizontal className="w-5 h-5 stroke-[2.2]" />
+          <Utensils className="w-6.5 h-6.5 text-[#FF5722] group-hover:scale-110 transition-transform stroke-[2.4]" />
         </button>
       </div>
 
-      {/* 3. Hero Promo Banner: Dynamic Cafe Highlight */}
-      {!isSearching && (
-        <div className="relative bg-[#FBF4EE] rounded-[32px] p-5 sm:p-6 mb-6 overflow-hidden shadow-xs flex items-center justify-between border border-[#F3E7DC]">
-          <div className="max-w-[170px] sm:max-w-[210px] z-10">
-            {sections.length > 0 && (
-              <span className="inline-block bg-[#FDE2D8] text-[#C0192A] text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-3 py-1 rounded-full mb-2.5 truncate max-w-full">
-                {sections[0].name}
-              </span>
-            )}
-            <h2 className="font-extrabold text-2xl sm:text-3xl text-stone-900 leading-tight tracking-tight line-clamp-2">
-              {cafeName}
-            </h2>
-            {menu?.cafe_profile?.tagline && (
-              <p className="text-[11px] sm:text-xs text-stone-600 font-medium leading-relaxed my-2 line-clamp-2">
-                {menu.cafe_profile.tagline}
-              </p>
-            )}
-            <button
-              onClick={onOpenMenu}
-              className="bg-[#C0192A] hover:bg-[#A31423] text-white text-xs sm:text-sm font-bold pl-4 pr-1.5 py-1.5 rounded-full shadow-md shadow-red-600/20 active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer mt-1"
-            >
-              <span>Explore Menu</span>
-              <span className="w-6 h-6 rounded-full bg-white text-[#C0192A] flex items-center justify-center font-bold">
-                <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
-              </span>
-            </button>
-          </div>
+      {/* 8. Menu Directory Drawer (Table of Contents) */}
+      <MenuDrawer
+        isOpen={isMenuDrawerOpen}
+        onClose={() => setIsMenuDrawerOpen(false)}
+        sections={sections}
+        allCategories={allCategories}
+        selectedCategoryId={selectedCatId === 'all' ? null : selectedCatId}
+        onSelectCategory={(catId) => {
+          setSelectedCatId(catId);
+          setIsMenuDrawerOpen(false);
+        }}
+      />
 
-          {/* Right Image Graphic (from backend popular item or cafe cover) */}
-          {(popularItems[0]?.images?.[0]?.url || menu?.cafe_profile?.cover_url || menu?.cafe_profile?.logo_url) && (
-            <div className="relative w-32 h-32 sm:w-40 sm:h-40 shrink-0 flex items-center justify-end overflow-hidden rounded-2xl">
-              <img
-                src={popularItems[0]?.images?.[0]?.url || menu?.cafe_profile?.cover_url || menu?.cafe_profile?.logo_url}
-                alt={popularItems[0]?.name || cafeName}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-                className="w-full h-full max-w-full max-h-full object-cover rounded-2xl drop-shadow-xl hover:scale-105 transition-transform duration-300 block shrink-0"
-              />
+      {/* 9. Floating Bottom Cart Bar */}
+      <BottomCartBar onOpenCart={onOpenCart} />
+
+      {/* 10. Store Info Modal */}
+      {showStoreInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+              <h3 className="font-heading font-extrabold text-base text-stone-900">{cafeName}</h3>
+              <button
+                type="button"
+                onClick={() => setShowStoreInfo(false)}
+                className="w-7 h-7 rounded-full bg-stone-100 flex items-center justify-center text-stone-600"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+              </button>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* 4. Circular Categories Row (Exact match to Chick-fil-A reference) */}
-      {!isSearching && (
-        <div className="mb-6">
-          <div className="flex items-center space-x-4 overflow-x-auto no-scrollbar py-1 px-1">
-            {displayCategories.map((cat) => {
-              const isSelected = selectedCatId === cat.id;
-              const catObj = allCategories.find((c) => c.id === cat.id);
-              const foundImg = catObj?.items?.find((i) => i.images && i.images.length > 0 && i.images[0]?.url)?.images?.[0]?.url;
-              const catItemImg =
-                cat.id !== 'all'
-                  ? foundImg
-                  : menu?.cafe_profile?.logo_url && !logoError
-                    ? menu.cafe_profile.logo_url
-                    : null;
-              const hasValidImg = catItemImg && !failedCatImages[cat.id];
-
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCatId(cat.id)}
-                  className="flex flex-col items-center justify-start group cursor-pointer shrink-0 active:scale-95 transition-transform"
-                >
-                  <div
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center p-1 transition-all duration-200 overflow-hidden ${
-                      isSelected
-                        ? 'border-2 border-[#C0192A] bg-white shadow-sm ring-4 ring-[#C0192A]/10 scale-105'
-                        : 'border border-stone-200/70 bg-[#F8F4EE] hover:border-stone-300 shadow-2xs'
-                    }`}
-                  >
-                    {hasValidImg ? (
-                      <img
-                        src={catItemImg}
-                        alt={cat.name}
-                        onError={() => {
-                          setFailedCatImages((prev) => ({ ...prev, [cat.id]: true }));
-                        }}
-                        className="w-full h-full object-cover rounded-full"
-                      />
-                    ) : (
-                      <span className="text-xl sm:text-2xl select-none">{cat.icon}</span>
-                    )}
-                  </div>
-                  <span
-                    className={`text-xs font-bold mt-2 text-center whitespace-nowrap px-1 transition-colors ${
-                      isSelected ? 'text-[#C0192A]' : 'text-stone-700 group-hover:text-stone-900'
-                    }`}
-                  >
-                    {cat.name}
+            <div className="space-y-2 text-xs text-stone-600">
+              {tableLabel && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-[#FF5722]" />
+                  <span className="font-semibold">
+                    {tableLabel}
+                    {tableZone}
                   </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 5. "Popular Picks" Horizontal Scroll Carousel */}
-      {!isSearching && selectedCatId === 'all' && popularItems.length > 0 && (
-        <div className="mb-7">
-          <div className="flex items-center justify-between mb-3 px-1">
-            <h3 className="font-extrabold text-lg sm:text-xl text-stone-900 tracking-tight">
-              Popular Picks
-            </h3>
-            <button
-              onClick={onOpenMenu}
-              className="text-xs sm:text-sm font-bold text-[#C0192A] hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              <span>View All</span>
-              <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
-            </button>
-          </div>
-
-          <div className="flex items-stretch gap-3.5 overflow-x-auto no-scrollbar py-2 px-1">
-            {popularItems.map((item) => {
-              const imageUrl = item.images?.[0]?.url || getFoodImageFallback(item.name);
-              const tagLabel = item.tags && item.tags.length > 0 ? item.tags[0] : (item.diet_type === 'VEG' ? 'VEG' : undefined);
-
-              return (
-                <div
-                  key={`pop-${item.id}`}
-                  onClick={() => onSelectItem(item)}
-                  className="w-48 sm:w-52 shrink-0 bg-white rounded-3xl p-3.5 sm:p-4 border border-stone-200/60 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group active:scale-[0.98]"
-                >
-                  {/* Top Badge (Only if real tag or diet exists) */}
-                  <div className="flex items-center justify-start min-h-[22px] mb-1">
-                    {tagLabel ? (
-                      <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-red-50 text-[#C0192A] border border-red-200">
-                        {tagLabel}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {/* Centered Food Image with Rounded Border Radius */}
-                  <div className="w-full h-28 sm:h-32 rounded-2xl overflow-hidden bg-stone-50 border border-stone-100 flex items-center justify-center my-2 p-1 relative shrink-0">
-                    <img
-                      src={imageUrl}
-                      alt={item.name}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
-                      }}
-                      className="w-full h-full max-w-full max-h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 block drop-shadow-xs shrink-0"
-                    />
-                  </div>
-
-                  {/* Food Details */}
-                  <div className="mt-1 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-extrabold text-sm text-stone-900 leading-snug line-clamp-1">
-                        {item.name}
-                      </h4>
-                      {(item.description || item.short_name) && (
-                        <p className="text-[11px] text-stone-400 font-normal line-clamp-1 mt-0.5">
-                          {item.description || item.short_name}
-                        </p>
-                      )}
-                    </div>
-                    {item.prep_time_minutes ? (
-                      <div className="flex items-center gap-1 text-[11px] text-stone-500 font-medium mt-1.5">
-                        <Clock className="w-3.5 h-3.5 text-stone-400" />
-                        <span>{item.prep_time_minutes} mins</span>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {/* Price & Add Button */}
-                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-stone-100">
-                    <span className="font-black text-sm sm:text-base text-stone-900">
-                      {formatCurrency(item.base_price_paise)}
-                    </span>
-                    <button
-                      onClick={(e) => handleQuickAdd(item, e)}
-                      className="w-8 h-8 rounded-full bg-[#C0192A] hover:bg-[#A31423] text-white flex items-center justify-center shadow-md shadow-red-600/20 active:scale-90 transition-transform cursor-pointer"
-                      aria-label="Add item"
-                    >
-                      <Plus className="w-4 h-4 stroke-[3]" />
-                    </button>
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 6. All Food Menu Items Grid */}
-      <div>
-        <div className="flex items-center justify-between mb-3.5 px-1">
-          <h3 className="font-extrabold text-lg sm:text-xl text-stone-900 tracking-tight">
-            {isSearching
-              ? `Results for "${searchQuery}" (${filteredItems.length})`
-              : selectedCatId === 'all'
-                ? 'All Menu Items'
-                : displayCategories.find((c) => c.id === selectedCatId)?.name || 'Menu Items'}
-          </h3>
-          {!isSearching && selectedCatId !== 'all' && (
-            <button
-              onClick={() => setSelectedCatId('all')}
-              className="text-xs sm:text-sm font-bold text-[#C0192A] hover:underline cursor-pointer"
-            >
-              Show all
-            </button>
-          )}
-        </div>
-
-        {filteredItems.length === 0 ? (
-          <div className="bg-white rounded-3xl p-8 text-center border border-stone-200/70 shadow-xs">
-            <span className="text-4xl mb-2 inline-block">🔍</span>
-            <p className="text-base font-extrabold text-stone-800">No items found</p>
-            <p className="text-xs sm:text-sm text-stone-400 mt-1">
-              Try searching with another keyword or explore other categories.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {filteredItems.map((item) => {
-              const imageUrl = item.images?.[0]?.url || getFoodImageFallback(item.name);
-              const tagLabel =
-                item.tags && item.tags.length > 0
-                  ? item.tags[0]
-                  : item.diet_type === 'VEG'
-                  ? 'VEG'
-                  : undefined;
-
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => onSelectItem(item)}
-                  className="bg-white rounded-3xl p-3 sm:p-3.5 border border-stone-200/60 shadow-xs hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group active:scale-[0.98]"
-                >
-                  {/* Top Badge (Only if real tag or diet exists) */}
-                  <div className="flex items-center justify-start min-h-[20px] mb-1">
-                    {tagLabel ? (
-                      <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-red-50 text-[#C0192A] border border-red-200">
-                        {tagLabel}
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {/* Centered Food Image with Fixed Sizing & Rounded Border Radius */}
-                  <div className="w-full h-28 sm:h-32 rounded-2xl overflow-hidden bg-stone-50 border border-stone-100 flex items-center justify-center my-1.5 p-1 relative shrink-0">
-                    <img
-                      src={imageUrl}
-                      alt={item.name}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = getFoodImageFallback(item.name);
-                      }}
-                      className="w-full h-full max-w-full max-h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300 block drop-shadow-xs shrink-0"
-                    />
-                  </div>
-
-                  {/* Food Name & Subtitle */}
-                  <div className="mt-1 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h4 className="font-extrabold text-sm text-stone-900 leading-snug line-clamp-1">
-                        {item.name}
-                      </h4>
-                      {(item.description || item.short_name) && (
-                        <p className="text-[11px] text-stone-400 font-normal line-clamp-1 mt-0.5">
-                          {item.description || item.short_name}
-                        </p>
-                      )}
-                    </div>
-                    {item.prep_time_minutes ? (
-                      <div className="flex items-center gap-1 text-[11px] text-stone-500 font-medium mt-1">
-                        <Clock className="w-3.5 h-3.5 text-stone-400" />
-                        <span>{item.prep_time_minutes} mins</span>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  {/* Price & Red Circular Plus Button */}
-                  <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-stone-100">
-                    <span className="font-black text-sm sm:text-base text-stone-900">
-                      {formatCurrency(item.base_price_paise)}
-                    </span>
-
-                    <button
-                      onClick={(e) => handleQuickAdd(item, e)}
-                      className="w-8 h-8 rounded-full bg-[#C0192A] hover:bg-[#A31423] text-white flex items-center justify-center shadow-md shadow-red-600/20 active:scale-90 transition-transform cursor-pointer"
-                      aria-label="Add item"
-                    >
-                      <Plus className="w-4 h-4 stroke-[3]" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Restaurant Compliance & Info Footer */}
-        <div className="mt-10 pt-6 border-t border-stone-200/80 text-center space-y-2 pb-6">
-          <div className="flex items-center justify-center gap-2 text-xs font-bold text-stone-700">
-            <Store className="w-3.5 h-3.5 text-[#C0192A]" />
-            <span>{cafeName}</span>
-          </div>
-          {menu?.cafe_profile?.tagline && (
-            <p className="text-[11px] text-stone-500 italic max-w-xs mx-auto">
-              "{menu.cafe_profile.tagline}"
-            </p>
-          )}
-          {menu?.cafe_profile?.address && (
-            <p className="text-[11px] text-stone-500 max-w-xs mx-auto flex items-center justify-center gap-1">
-              <MapPin className="w-3 h-3 text-stone-400 shrink-0" />
-              <span>{menu.cafe_profile.address}</span>
-            </p>
-          )}
-          {menu?.cafe_profile?.fssai_lic_no && (
-            <div className="inline-flex items-center gap-1.5 bg-white border border-stone-200/80 rounded-full px-3 py-1 shadow-2xs text-[10px] text-stone-600 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>FSSAI Lic. No. <strong>{menu.cafe_profile.fssai_lic_no}</strong></span>
-            </div>
-          )}
-          <p className="text-[10px] text-stone-400 pt-2">
-            Powered by <span className="font-bold text-stone-600">Qizine</span> • Digital Dining Experience
-          </p>
-        </div>
-      </div>
-
-      {/* Vendor Details & Regulatory Sheet / Modal */}
-      {showVendorModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200"
-          onClick={() => setShowVendorModal(false)}
-        >
-          <div
-            className="w-full sm:max-w-md bg-white rounded-t-[32px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-stone-200/80 animate-in slide-in-from-bottom-6 duration-300 max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header Banner */}
-            <div className="relative h-32 sm:h-36 bg-gradient-to-br from-[#E02438] via-[#C0192A] to-[#8C101D] p-4 flex items-start justify-between text-white shrink-0">
-              {menu?.cafe_profile?.cover_url && (
-                <img
-                  src={menu.cafe_profile.cover_url}
-                  alt={cafeName}
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-50"
-                />
               )}
-              <div className="z-10">
-                <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full tracking-wider border border-white/20">
-                  Restaurant Profile
-                </span>
-              </div>
-              <button
-                onClick={() => setShowVendorModal(false)}
-                className="z-10 w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center transition active:scale-95 cursor-pointer"
-                aria-label="Close"
-              >
-                <X className="w-5 h-5 stroke-[2.5]" />
-              </button>
+              {menu?.cafe_profile?.address && (
+                <p className="text-stone-500 font-sans">{menu.cafe_profile.address}</p>
+              )}
+              {menu?.cafe_profile?.phone && (
+                <p className="text-stone-700 font-bold">📞 {menu.cafe_profile.phone}</p>
+              )}
+              {menu?.cafe_profile?.fssai_lic_no && (
+                <p className="text-[11px] text-stone-400 font-sans">
+                  FSSAI Lic: {menu.cafe_profile.fssai_lic_no}
+                </p>
+              )}
             </div>
-
-            {/* Modal Body */}
-            <div className="p-5 sm:p-6 overflow-y-auto no-scrollbar space-y-5 -mt-10 z-20">
-              {/* Logo + Name Header */}
-              <div className="flex items-end gap-3.5">
-                <div className="w-20 h-20 min-w-[5rem] min-h-[5rem] max-w-[5rem] max-h-[5rem] rounded-2xl bg-white border-2 border-white shadow-xl p-1.5 shrink-0 overflow-hidden flex items-center justify-center relative">
-                  {menu?.cafe_profile?.logo_url && !logoError ? (
-                    <img
-                      src={menu.cafe_profile.logo_url}
-                      alt={cafeName}
-                      className="w-full h-full max-w-full max-h-full object-cover rounded-xl block shrink-0"
-                    />
-                  ) : (
-                    <Store className="w-8 h-8 text-[#C0192A]" />
-                  )}
-                </div>
-                <div className="flex-1 pb-1">
-                  <h3 className="font-serif font-black text-2xl text-[#C0192A] italic leading-tight">
-                    {cafeName}
-                  </h3>
-                  {menu?.cafe_profile?.tagline && (
-                    <p className="text-xs text-stone-500 font-medium mt-0.5">
-                      {menu.cafe_profile.tagline}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Status & Dining Badges */}
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="bg-[#FAF9F7] rounded-2xl p-3 border border-stone-200/60 flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                    <Clock className="w-4 h-4 stroke-[2.5]" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">Status</p>
-                    <p className="text-xs font-black text-emerald-700">Kitchen Active</p>
-                  </div>
-                </div>
-
-                <div className="bg-[#FAF9F7] rounded-2xl p-3 border border-stone-200/60 flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-red-100 text-[#C0192A] flex items-center justify-center shrink-0">
-                    <MapPin className="w-4 h-4 stroke-[2.5]" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">Your Table</p>
-                    <p className="text-xs font-black text-stone-900 truncate">{tableLocation}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Details List */}
-              <div className="bg-stone-50/80 rounded-2xl p-4 border border-stone-200/60 space-y-3">
-                {/* Physical Address */}
-                {menu?.cafe_profile?.address && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-4 h-4 text-stone-400 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-xs font-bold text-stone-800">Address</p>
-                      <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
-                        {menu.cafe_profile.address}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Phone Contact */}
-                {menu?.cafe_profile?.phone && (
-                  <div className="flex items-center gap-3 pt-2 border-t border-stone-200/60">
-                    <Phone className="w-4 h-4 text-stone-400 shrink-0" />
-                    <div className="flex-1 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-bold text-stone-800">Contact Helpdesk</p>
-                        <p className="text-xs text-stone-500">{menu.cafe_profile.phone}</p>
-                      </div>
-                      <a
-                        href={`tel:${menu.cafe_profile.phone}`}
-                        className="bg-white hover:bg-stone-100 text-stone-800 text-xs font-bold px-3 py-1.5 rounded-xl border border-stone-200 shadow-2xs"
-                      >
-                        Call
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                {/* FSSAI License */}
-                {menu?.cafe_profile?.fssai_lic_no && (
-                  <div className="flex items-start gap-3 pt-2 border-t border-stone-200/60">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-xs font-bold text-stone-800">Food Safety & Quality</p>
-                      <p className="text-xs text-stone-600 font-mono mt-0.5">
-                        FSSAI License: <strong>{menu.cafe_profile.fssai_lic_no}</strong>
-                      </p>
-                      <p className="text-[10px] text-stone-400 mt-0.5">
-                        Certified hygienic preparation under government food standards
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Button */}
-              <button
-                onClick={() => setShowVendorModal(false)}
-                className="w-full bg-[#C0192A] hover:bg-[#A31423] text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg shadow-red-600/25 active:scale-98 transition-all cursor-pointer"
-              >
-                Back to Menu
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowStoreInfo(false)}
+              className="w-full py-2.5 rounded-xl bg-stone-900 text-white font-heading font-bold text-xs"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

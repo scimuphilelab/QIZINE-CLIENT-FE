@@ -1,26 +1,20 @@
-import React, { useState, useMemo } from 'react';
-import { Clock, ArrowLeft, UtensilsCrossed } from 'lucide-react';
+import React, { useState } from 'react';
 import { HomeScreen } from './screens/HomeScreen';
-import { CategoryScreen } from './screens/CategoryScreen';
 import { ItemDetailScreen } from './screens/ItemDetailScreen';
 import { CartScreen } from './screens/CartScreen';
-import { CustomizeScreen } from './screens/CustomizeScreen';
 import { OrderConfirmationScreen } from './screens/OrderConfirmationScreen';
-import { BottomNav, type NavTab } from './components/BottomNav';
 import { OrderTrackerView } from '../../core/components/OrderTrackerView';
 import { useMenu } from '../../core/hooks/useMenu';
 import { useCart } from '../../core/hooks/useCart';
 import { QizineApi, type CreateOrderResponseData } from '../../core/api/axios';
-import type { MenuItem, MenuCategory } from '../../core/types/menu.types';
+import type { MenuItem } from '../../core/types/menu.types';
 import type { SelectedAddon } from '../../core/types/order.types';
 import type { TemplateProps } from '../registry';
 
 export type ScreenState =
   | 'home'
-  | 'category'
   | 'item_detail'
   | 'cart'
-  | 'customize'
   | 'confirmation'
   | 'tracker';
 
@@ -32,8 +26,6 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     allCategories,
     selectedSectionId,
     setSelectedSectionId,
-    selectedCategoryId,
-    setSelectedCategoryId,
     searchQuery,
     setSearchQuery,
   } = useMenu();
@@ -41,10 +33,9 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
 
   // Navigation State
   const [currentScreen, setCurrentScreen] = useState<ScreenState>('home');
-  const [activeTab, setActiveTab] = useState<NavTab>('home');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
 
-  // Active Order State
+  // Active Order State (persisted for user convenience upon order placement)
   const [activeOrder, setActiveOrder] = useState<CreateOrderResponseData | null>(() => {
     try {
       const saved = localStorage.getItem('qizine_active_order');
@@ -58,81 +49,16 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   // Dynamic Cafe Profile
-  const cafeName = menu?.cafe_profile?.name || booth?.vendor_name || 'Qizine Dining';
+  const cafeName = menu?.cafe_profile?.name || booth?.vendor_name || 'Qizine Restaurant';
   const tableLocation = booth?.booth_label
     ? `Table ${booth.booth_label}${booth.zone ? ` • ${booth.zone}` : ''}`
     : (menu?.cafe_profile?.address || '');
-
-  // Current active category for Category Screen
-  const activeCategory: MenuCategory = useMemo(() => {
-    if (selectedCategoryId) {
-      const found = allCategories.find((c) => c.id === selectedCategoryId);
-      if (found) return found;
-    }
-    return categories[0] || allCategories[0] || {
-      id: 'cat_all',
-      name: 'All Items',
-      description: 'Handcrafted dishes and beverages.',
-      sort_order: 1,
-      is_active: true,
-      items: [],
-    };
-  }, [categories, allCategories, selectedCategoryId]);
-
-  // Popular items flattened across all categories
-  const popularItems: MenuItem[] = useMemo(() => {
-    const all = allCategories.flatMap((c) => c.items);
-    return all.slice(0, 6);
-  }, [allCategories]);
-
-  // Tab change handler
-  const handleTabChange = (tab: NavTab) => {
-    setActiveTab(tab);
-    if (tab === 'home') {
-      setCurrentScreen('home');
-    } else if (tab === 'cart') {
-      setCurrentScreen('cart');
-    } else if (tab === 'profile') {
-      setCurrentScreen('tracker');
-    }
-  };
-
-  // Section change handler
-  const handleSelectSection = (sectionId: string) => {
-    setSelectedSectionId(sectionId);
-    if (sectionId !== 'ALL') {
-      const targetSec = sections.find((s) => s.id === sectionId);
-      if (targetSec && targetSec.categories.length > 0) {
-        setSelectedCategoryId(targetSec.categories[0].id);
-      }
-    }
-  };
-
-  // Navigate to category screen
-  const handleSelectCategory = (categoryId: string) => {
-    setSelectedCategoryId(categoryId);
-    setCurrentScreen('category');
-    setActiveTab('home');
-  };
-
-  const handleOpenMenu = () => {
-    setCurrentScreen('category');
-    setActiveTab('home');
-  };
 
   // Open item detail screen
   const handleSelectItem = (item: MenuItem) => {
     setSelectedItem(item);
     setCurrentScreen('item_detail');
-  };
-
-  // Quick add from category list: adds 1 amount directly to cart
-  const handleQuickAdd = (item: MenuItem) => {
-    const defaultVarId =
-      item.variants && item.variants.length > 0
-        ? item.variants.find((v) => v.is_default)?.id || item.variants[0].id
-        : undefined;
-    addItem(item, defaultVarId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Add from item detail screen
@@ -140,30 +66,18 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
     item: MenuItem,
     variantId: string | undefined,
     selectedAddons: SelectedAddon[],
-    quantity: number
+    quantity: number,
+    specialInstructions?: string
   ) => {
-    addItem(item, variantId, selectedAddons, undefined, quantity);
-    setCurrentScreen('cart');
-    setActiveTab('cart');
+    addItem(item, variantId, selectedAddons, specialInstructions, quantity);
+    setCurrentScreen('home');
   };
 
-  // Add from customize screen
-  const handleAddToCartFromCustomize = (
-    item: MenuItem,
-    variantId: string | undefined,
-    selectedAddons: SelectedAddon[],
-    quantity: number
-  ) => {
-    addItem(item, variantId, selectedAddons, undefined, quantity);
-    setCurrentScreen('cart');
-    setActiveTab('cart');
-  };
-
-  // Proceed to checkout handler
+  // Submit order to kitchen backend API
   const handleProceedToCheckout = async () => {
     if (booth?.is_open === false) {
       setCheckoutError(
-        `The shop is closed now. ${
+        `The restaurant is currently closed. ${
           booth.opening_time ? `Ordering resumes at ${booth.opening_time}.` : 'Please check back later.'
         }`
       );
@@ -218,97 +132,67 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
       setActiveOrder(orderResult);
       clearCart();
       setCurrentScreen('confirmation');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
-      console.error('[Modern01Template] Order API failed:', err);
+      console.error('[Qizine] Order submission failed:', err);
       const errMsg =
         err.response?.data?.message ||
         err.response?.data?.error ||
         err.message ||
-        'Unable to place order with kitchen. Please try again.';
+        'Unable to send order to the kitchen. Please check connection and try again.';
       setCheckoutError(errMsg);
     } finally {
       setIsSubmittingOrder(false);
     }
   };
 
-  const showBottomNav =
-    currentScreen === 'home' ||
-    currentScreen === 'category' ||
-    currentScreen === 'cart' ||
-    currentScreen === 'tracker';
-
   return (
-    <div className="min-h-screen bg-[#FAF9F7] selection:bg-[#C0192A]/20 selection:text-[#C0192A] flex flex-col justify-start">
+    <div className="min-h-screen bg-[#FAF9F7] selection:bg-[#FF5722]/20 selection:text-[#FF5722] flex flex-col justify-start">
       <div className="w-full max-w-md sm:max-w-lg mx-auto min-h-screen bg-[#FAF9F7] relative flex flex-col shadow-2xl sm:my-4 sm:rounded-[36px] sm:border sm:border-stone-200/60 overflow-hidden">
-        {/* 1. Home / Menu Screen */}
+        {/* Screen 1: Home / Menu List Screen */}
         {currentScreen === 'home' && (
           <HomeScreen
             menu={menu}
             sections={sections}
             selectedSectionId={selectedSectionId}
-            onSelectSection={handleSelectSection}
+            onSelectSection={setSelectedSectionId}
             categories={categories}
             allCategories={allCategories}
-            popularItems={popularItems}
             booth={booth}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            onSelectCategory={handleSelectCategory}
             onSelectItem={handleSelectItem}
             onOpenCart={() => {
               setCurrentScreen('cart');
-              setActiveTab('cart');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            onOpenMenu={handleOpenMenu}
             onOpenTracker={() => {
               setCurrentScreen('tracker');
-              setActiveTab('profile');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             hasActiveOrder={Boolean(activeOrder)}
             cartCount={calculation.total_items_count}
           />
         )}
 
-        {/* 2. Category / Menu Catalog Screen */}
-        {currentScreen === 'category' && (
-          <CategoryScreen
-            category={activeCategory}
-            sections={sections}
-            selectedSectionId={selectedSectionId}
-            onSelectSection={handleSelectSection}
-            categories={allCategories}
-            selectedCategoryId={selectedCategoryId}
-            onSelectCategory={handleSelectCategory}
-            onBack={() => {
-              setCurrentScreen('home');
-              setActiveTab('home');
-            }}
-            onSelectItem={handleSelectItem}
-            onQuickAdd={handleQuickAdd}
-          />
-        )}
-
-        {/* 3. Item Detail Screen */}
+        {/* Screen 2: Full Item Detail Screen */}
         {currentScreen === 'item_detail' && selectedItem && (
           <ItemDetailScreen
             item={selectedItem}
             onBack={() => {
-              if (activeTab === 'home') {
-                setCurrentScreen('home');
-              } else {
-                setCurrentScreen('category');
-              }
+              setCurrentScreen('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onAddToCart={handleAddToCartFromDetail}
           />
         )}
 
-        {/* 4. Cart Screen */}
+        {/* Screen 3: Cart / Review Screen */}
         {currentScreen === 'cart' && (
           <CartScreen
             onBack={() => {
               setCurrentScreen('home');
-              setActiveTab('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onProceedToCheckout={handleProceedToCheckout}
             cafeName={cafeName}
@@ -322,77 +206,56 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
           />
         )}
 
-        {/* 5. Customization / Add-ons Screen */}
-        {currentScreen === 'customize' && selectedItem && (
-          <CustomizeScreen
-            item={selectedItem}
-            onBack={() => {
-              if (activeTab === 'home') {
-                setCurrentScreen('home');
-              } else {
-                setCurrentScreen('category');
-              }
-            }}
-            onConfirm={handleAddToCartFromCustomize}
-          />
-        )}
-
-        {/* 6. Order Confirmation Screen */}
+        {/* Screen 4: Order Confirmation Screen */}
         {currentScreen === 'confirmation' && (
           <OrderConfirmationScreen
             orderData={activeOrder}
-            onViewOrderDetails={() => setCurrentScreen('tracker')}
+            onViewOrderDetails={() => {
+              setCurrentScreen('tracker');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             onBackToHome={() => {
               setCurrentScreen('home');
-              setActiveTab('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
         )}
 
-        {/* Real-time Order Tracker Screen */}
+        {/* Screen 5: Live Order Tracker Screen */}
         {currentScreen === 'tracker' && (
           activeOrder ? (
             <OrderTrackerView
               orderData={activeOrder}
               onBackToMenu={() => {
                 setCurrentScreen('home');
-                setActiveTab('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onOrderCancelled={() => {
                 setActiveOrder(null);
                 setCurrentScreen('home');
-                setActiveTab('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center min-h-[500px]">
-              <div className="w-20 h-20 rounded-full bg-[#C0192A]/10 flex items-center justify-center text-[#C0192A] mb-5 shadow-sm">
-                <UtensilsCrossed className="w-9 h-9" />
+              <div className="w-16 h-16 rounded-full bg-[#FFF4EE] flex items-center justify-center text-[#FF5722] mb-4 shadow-2xs">
+                🍽️
               </div>
-              <h3 className="text-xl font-bold text-stone-900 tracking-tight">No Active Orders</h3>
-              <p className="text-sm text-stone-500 mt-2 max-w-xs font-normal">
-                You haven't placed any orders yet. Explore our delicious menu and place your order!
+              <h3 className="text-xl font-extrabold text-stone-900 tracking-tight">No Active Orders</h3>
+              <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-xs font-normal">
+                You do not have any active orders right now. Explore the menu and place your table order!
               </p>
               <button
                 onClick={() => {
                   setCurrentScreen('home');
-                  setActiveTab('home');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
-                className="mt-6 px-7 py-3 rounded-2xl bg-[#C0192A] text-white font-semibold text-sm shadow-md hover:bg-[#A31423] active:scale-95 transition-all"
+                className="mt-6 px-6 py-3 rounded-2xl bg-[#FF5722] hover:bg-[#F4511E] text-white font-extrabold text-xs sm:text-sm shadow-md shadow-orange-500/25 active:scale-95 transition-all"
               >
                 Explore Menu
               </button>
             </div>
           )
-        )}
-
-        {/* Persistent Floating Bottom Navigation Bar */}
-        {showBottomNav && (
-          <BottomNav
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            cartCount={calculation.total_items_count}
-          />
         )}
       </div>
     </div>

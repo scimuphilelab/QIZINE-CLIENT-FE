@@ -16,23 +16,16 @@ export interface TemplateMeta {
 export const TEMPLATE_REGISTRY: Record<string, TemplateMeta> = {
   tpl_default: {
     id: 'tpl_default',
-    name: 'Default (User Interface)',
-    description: 'High-conversion mobile-first UX with horizontal food cards, sticky category pills and spring cart bar',
-    recommendedFor: 'Cafés, Fast Casual & High-Volume QSR',
-    component: lazy(() => import('./tpl_default')),
+    name: 'Modern List Menu',
+    description: 'High-density, smooth list menu with search bar, veg filter switch, circular category carousel, and full item details page',
+    recommendedFor: 'Restaurants, Cafés & High-Volume Dining',
+    component: lazy(() => import('./tpl_modern_01')),
   },
   tpl_modern_01: {
     id: 'tpl_modern_01',
-    name: 'Modern 01 (Vintage Warm Burger)',
-    description: 'Warm retro parchment & charcoal aesthetic with complete 6-screen flow: Home, Category, Item Detail, Cart, Customization and Confirmation',
-    recommendedFor: 'Artisanal Burger Joints, Retro Diners & Cafés',
-    component: lazy(() => import('./tpl_modern_01')),
-  },
-  tpl_modern_02: {
-    id: 'tpl_modern_02',
-    name: 'Street Bistro',
-    description: 'Vibrant quick-pick layout with tactile category pills and energetic styling',
-    recommendedFor: 'Food Trucks, Bistros & Casual Street Eats',
+    name: 'Modern List Menu (Reference Layout)',
+    description: 'Modern list layout with circular category carousel, search, veg filter toggle, and full details ordering page',
+    recommendedFor: 'Cafés, Casual Dining, Bistros & Modern Food Halls',
     component: lazy(() => import('./tpl_modern_01')),
   },
 };
@@ -49,29 +42,10 @@ export function resolveTemplate(templateId?: string): TemplateMeta {
       normalized === 'tpl_modern_01' ||
       normalized === 'modern_01' ||
       normalized === 'modern' ||
-      normalized === 'tpl_editorial' ||
-      normalized === 'editorial' ||
-      normalized === 'vintage_burger'
+      normalized === 'tpl_default' ||
+      normalized === 'default'
     ) {
       return TEMPLATE_REGISTRY.tpl_modern_01;
-    }
-    if (
-      normalized === 'tpl_modern_02' ||
-      normalized === 'modern_02' ||
-      normalized === 'tpl_street_bistro' ||
-      normalized === 'street_bistro' ||
-      normalized === 'bistro'
-    ) {
-      return TEMPLATE_REGISTRY.tpl_modern_02;
-    }
-    if (
-      normalized === 'tpl_default' ||
-      normalized === 'default' ||
-      normalized === 'tpl_swiggy_modern' ||
-      normalized === 'swiggy_modern' ||
-      normalized === 'minimal_modern'
-    ) {
-      return TEMPLATE_REGISTRY.tpl_default;
     }
   }
   return TEMPLATE_REGISTRY[DEFAULT_TEMPLATE_ID];

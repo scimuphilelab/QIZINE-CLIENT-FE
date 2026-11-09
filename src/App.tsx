@@ -158,8 +158,8 @@ export const App: React.FC = () => {
   // View 1: Branded Skeleton Loader
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FAF4EE] text-stone-900 p-6 text-center font-sans selection:bg-[#FF385C]/20 selection:text-[#FF385C]">
-        <div className="relative w-20 h-20 rounded-3xl bg-[#FF385C] text-white flex items-center justify-center shadow-xl shadow-red-500/25 mb-5 animate-bounce">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FAF9F7] text-stone-900 p-6 text-center font-sans selection:bg-[#FF5722]/20 selection:text-[#FF5722]">
+        <div className="relative w-20 h-20 rounded-3xl bg-[#FF5722] text-white flex items-center justify-center shadow-xl shadow-orange-500/25 mb-5 animate-bounce">
           <UtensilsCrossed className="w-10 h-10 stroke-[2.2]" />
           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white ring-2 ring-emerald-500/30 animate-pulse" />
         </div>
@@ -172,7 +172,7 @@ export const App: React.FC = () => {
 
         {/* Pulsing Loading Bar */}
         <div className="w-48 h-1.5 bg-stone-200/80 rounded-full overflow-hidden mt-6">
-          <div className="w-full h-full bg-gradient-to-r from-[#FF512F] via-[#FF385C] to-[#DD2476] rounded-full animate-pulse" />
+          <div className="w-full h-full bg-gradient-to-r from-[#FF7043] via-[#FF5722] to-[#F4511E] rounded-full animate-pulse" />
         </div>
 
         {activeQrKey && (

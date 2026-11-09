@@ -30,8 +30,10 @@ export default {
         },
       },
       fontFamily: {
-        heading: ['var(--font-heading)', 'sans-serif'],
-        body: ['var(--font-body)', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        heading: ['Outfit', '"Plus Jakarta Sans"', 'sans-serif'],
+        display: ['Outfit', 'sans-serif'],
+        body: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       borderRadius: {
         'brand': 'var(--radius-brand, 1rem)',

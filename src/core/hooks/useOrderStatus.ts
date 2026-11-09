@@ -77,7 +77,7 @@ export function useOrderStatus({
         eventSourceRef.current = null;
       };
     } else {
-      // Polling live backend order status with demo progression fallback
+      // Polls real backend database order status via REST API
       let isSubscribed = true;
       const checkBackendStatus = async () => {
         try {

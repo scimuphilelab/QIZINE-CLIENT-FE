@@ -91,33 +91,33 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
   const currentStepIndex = Math.max(0, statusOrder.indexOf(currentStatus));
 
   return (
-    <div className="min-h-screen bg-[#FAF4EE] text-stone-900 pb-20 font-sans selection:bg-[#FF385C]/20 selection:text-[#FF385C]">
+    <div className="min-h-screen bg-[#FAF9F7] text-stone-900 pb-20 font-sans selection:bg-[#FF5722]/20 selection:text-[#FF5722]">
       {/* Top Navbar */}
-      <header className="sticky top-0 z-20 bg-[#FAF4EE]/90 backdrop-blur-md border-b border-stone-200/60 px-4 sm:px-6 py-4 flex items-center justify-between">
+      <header className="sticky top-0 z-20 bg-[#FAF9F7]/90 backdrop-blur-md border-b border-stone-200/60 px-4 sm:px-6 py-4 flex items-center justify-between">
         <button
           onClick={onBackToMenu}
-          className="w-11 h-11 rounded-full bg-white border border-stone-200/80 shadow-sm flex items-center justify-center text-stone-800 hover:scale-105 active:scale-95 transition"
+          className="w-10 h-10 rounded-full bg-white border border-stone-200 shadow-2xs flex items-center justify-center text-stone-800 hover:scale-105 active:scale-95 transition"
           aria-label="Back to Menu"
         >
           <ArrowLeft className="w-5 h-5 stroke-[2.5]" />
         </button>
-        <span className="font-black text-lg sm:text-xl text-stone-900 tracking-tight">
+        <span className="font-extrabold text-base sm:text-lg text-stone-900 tracking-tight">
           Live Order Status
         </span>
-        <div className="w-11 h-11" />
+        <div className="w-10 h-10" />
       </header>
 
       <main className="max-w-md sm:max-w-lg mx-auto p-4 sm:p-5 space-y-4">
         {/* Token Card */}
-        <div className="bg-white rounded-3xl p-6 border border-stone-200/70 shadow-sm text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#FF512F] via-[#FF385C] to-[#DD2476]" />
+        <div className="bg-white rounded-3xl p-6 border border-stone-200/70 shadow-2xs text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#FF5722] via-[#FF7043] to-[#FF8A65]" />
           
-          <p className="text-xs uppercase tracking-widest font-bold text-stone-400">
+          <p className="text-xs uppercase tracking-widest font-extrabold text-stone-400">
             Pickup & Table Token
           </p>
 
-          <div className="my-3 inline-block bg-red-50 border border-red-200/60 rounded-2xl px-6 py-2.5 shadow-2xs">
-            <span className="font-mono text-3xl sm:text-4xl font-black tracking-wider text-[#FF385C]">
+          <div className="my-3 inline-block bg-[#FFF4EE] border border-[#FFD7C5] rounded-2xl px-6 py-2.5 shadow-2xs">
+            <span className="font-mono text-3xl sm:text-4xl font-black tracking-wider text-[#FF5722]">
               #{orderData.ref_token}
             </span>
           </div>
@@ -131,12 +131,12 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
         </div>
 
         {/* Live Stepper Card */}
-        <div className="bg-white rounded-3xl p-5 border border-stone-200/70 shadow-sm space-y-4">
+        <div className="bg-white rounded-3xl p-5 border border-stone-200/70 shadow-2xs space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-black text-sm sm:text-base text-stone-900 tracking-tight">
+            <h3 className="font-extrabold text-sm sm:text-base text-stone-900 tracking-tight">
               Kitchen Preparation Status
             </h3>
-            <span className="text-xs font-black text-[#FF385C] bg-red-50 border border-red-200/60 px-3 py-1 rounded-full uppercase">
+            <span className="text-xs font-black text-[#FF5722] bg-[#FFF4EE] border border-[#FFD7C5] px-3 py-1 rounded-full uppercase">
               {currentStatus}
             </span>
           </div>
@@ -154,17 +154,17 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
                     <div
                       className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all ${
                         isCurrent
-                          ? 'bg-[#FF385C] text-white shadow-lg shadow-red-500/25 scale-110 ring-4 ring-red-500/20'
+                          ? 'bg-[#FF5722] text-white shadow-lg shadow-orange-500/25 scale-110 ring-4 ring-orange-500/20'
                           : isPassed
-                          ? 'bg-red-50 text-[#FF385C] border border-red-200/60'
+                          ? 'bg-[#FFF4EE] text-[#FF5722] border border-[#FFD7C5]'
                           : 'bg-stone-100 text-stone-400'
                       }`}
                     >
                       <IconComponent className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
                     </div>
                     <span
-                      className={`text-[10px] font-bold mt-1.5 uppercase tracking-wider ${
-                        isPassed ? 'text-[#FF385C]' : 'text-stone-400'
+                      className={`text-[10px] font-extrabold mt-1.5 uppercase tracking-wider ${
+                        isPassed ? 'text-[#FF5722]' : 'text-stone-400'
                       }`}
                     >
                       {step.label}
@@ -176,12 +176,12 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
           </div>
 
           {/* Time Estimate Message */}
-          <div className="bg-[#FEE8DC] rounded-2xl p-3.5 flex items-center space-x-3 text-xs sm:text-sm text-stone-800 font-medium border border-[#FCD8C4]/80">
-            <Clock className="w-5 h-5 text-[#FF385C] shrink-0 stroke-[2.2]" />
+          <div className="bg-[#FFF4EE] rounded-2xl p-3.5 flex items-center space-x-3 text-xs sm:text-sm text-stone-800 font-medium border border-[#FFD7C5]">
+            <Clock className="w-5 h-5 text-[#FF5722] shrink-0 stroke-[2.2]" />
             <p>
               {currentStatus === 'INITIATED' && 'Order received. Waiting for kitchen confirmation.'}
               {currentStatus === 'ACCEPTED' && 'Kitchen accepted your order. Preparation starting.'}
-              {currentStatus === 'PREPARING' && 'Chef is currently cooking your fresh items (~15 mins).'}
+              {currentStatus === 'PREPARING' && 'Chef is currently cooking your fresh items.'}
               {currentStatus === 'READY' && '🎉 Your order is ready! Please quote your token at the counter.'}
               {currentStatus === 'SERVED' && 'Enjoy your meal! Order marked served.'}
             </p>
@@ -190,9 +190,9 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
 
         {/* View 7: Web Push Notification Alert Prompt */}
         {isSupported && permission !== 'granted' && (
-          <div className="bg-white rounded-3xl p-4 border border-stone-200/70 shadow-sm flex items-center justify-between gap-3">
+          <div className="bg-white rounded-3xl p-4 border border-stone-200/70 shadow-2xs flex items-center justify-between gap-3">
             <div className="flex items-center space-x-3 min-w-0">
-              <div className="w-10 h-10 rounded-2xl bg-red-50 text-[#FF385C] flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-[#FFF4EE] text-[#FF5722] flex items-center justify-center shrink-0">
                 <BellRing className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="min-w-0">
@@ -202,7 +202,7 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
             </div>
             <button
               onClick={handleEnablePush}
-              className="px-4 py-2 bg-[#FF385C] hover:bg-[#E0294C] text-white text-xs font-bold rounded-xl shadow-md shadow-red-500/20 active:scale-95 transition shrink-0"
+              className="px-4 py-2 bg-[#FF5722] hover:bg-[#F4511E] text-white text-xs font-bold rounded-xl shadow-md shadow-orange-500/20 active:scale-95 transition shrink-0"
             >
               Notify Me
             </button>
@@ -228,7 +228,7 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
         <div className="pt-2">
           <button
             onClick={onBackToMenu}
-            className="w-full py-4 px-6 bg-[#FF385C] hover:bg-[#E0294C] text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-red-500/25 active:scale-95 transition text-center flex items-center justify-center gap-2"
+            className="w-full py-4 px-6 bg-[#FF5722] hover:bg-[#F4511E] text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-orange-500/25 active:scale-95 transition text-center flex items-center justify-center gap-2"
           >
             <span>+ Add More Items from Menu</span>
           </button>
