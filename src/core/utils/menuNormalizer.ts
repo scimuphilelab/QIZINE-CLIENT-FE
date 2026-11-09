@@ -212,7 +212,7 @@ export function normalizeResolveData(raw: any): ResolveResponseData {
           allergens: Array.isArray(it.allergens) ? it.allergens : [],
           is_active: it.is_active !== false,
           is_visible: it.is_visible !== false,
-          in_stock: it.in_stock !== false,
+          in_stock: it.in_stock !== false && it.is_in_stock !== false,
           sort_order: Number(it.sort_order ?? itIdx + 1),
         });
       });

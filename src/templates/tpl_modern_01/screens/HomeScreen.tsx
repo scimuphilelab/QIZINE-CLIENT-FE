@@ -70,13 +70,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const tableLabel = booth?.booth_label ? `Table ${booth.booth_label}` : 'Dine-In';
   const tableZone = booth?.zone ? ` • ${booth.zone}` : '';
 
-  // Get active section categories or all categories
+  // Availability predicate: hide sold out or non-visible dishes
+  const isItemAvailable = (item: MenuItem) =>
+    item.in_stock !== false &&
+    (item as any).is_in_stock !== false &&
+    item.is_visible !== false &&
+    item.is_active !== false;
+
+  // Get active section categories or all categories, strictly filtered for available items
   const activeSectionCategories = useMemo(() => {
-    if (!selectedSectionId || selectedSectionId === 'ALL') {
-      return allCategories;
-    }
-    const currentSection = sections.find((s) => s.id === selectedSectionId);
-    return currentSection ? currentSection.categories : allCategories;
+    const rawCategories =
+      !selectedSectionId || selectedSectionId === 'ALL'
+        ? allCategories
+        : sections.find((s) => s.id === selectedSectionId)?.categories || allCategories;
+
+    return rawCategories
+      .filter((c) => c.is_active !== false)
+      .map((c) => ({
+        ...c,
+        items: (c.items || []).filter(isItemAvailable),
+      }));
   }, [sections, selectedSectionId, allCategories]);
 
   // Categories for the circular carousel (with dish images extracted from first item with image)
@@ -112,7 +125,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const isSearching = searchQuery.trim().length > 0;
 
   const displayedItems = useMemo(() => {
-    // 1. Gather candidate items from active section and selected category
+    // 1. Gather candidate items from active section and selected category (strictly in stock)
     let items: MenuItem[] = [];
 
     if (selectedCatId === 'all') {
@@ -121,6 +134,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       const activeCat = activeSectionCategories.find((c) => c.id === selectedCatId);
       items = activeCat?.items ? [...activeCat.items] : [];
     }
+
+    // Filter out any sold out or non-visible items
+    items = items.filter(isItemAvailable);
 
     // Deduplicate by item ID
     const seen = new Set<string>();

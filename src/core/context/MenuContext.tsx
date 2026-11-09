@@ -55,7 +55,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children, initialMen
     }
   }, [menu]);
 
-  // All items flattened across the menu
+  // All items flattened across the menu (strictly in-stock and visible items only)
   const allItems = useMemo(() => {
     if (!menu) return [];
     return menu.sections
@@ -63,7 +63,15 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children, initialMen
       .flatMap((section) =>
         section.categories
           .filter((cat) => cat.is_active)
-          .flatMap((cat) => cat.items.filter((item) => item.is_active !== false))
+          .flatMap((cat) =>
+            cat.items.filter(
+              (item) =>
+                item.is_active !== false &&
+                item.is_visible !== false &&
+                item.in_stock !== false &&
+                (item as any).is_in_stock !== false
+            )
+          )
       );
   }, [menu]);
 
@@ -71,15 +79,22 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children, initialMen
   const filteredItems = useMemo(() => {
     let result = allItems;
 
+    const isAvailable = (i: MenuItem) =>
+      i.is_active !== false &&
+      i.is_visible !== false &&
+      i.in_stock !== false &&
+      (i as any).is_in_stock !== false;
+
     // If search query is present, search across all items
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter(
         (item) =>
-          item.name.toLowerCase().includes(q) ||
-          (item.short_name && item.short_name.toLowerCase().includes(q)) ||
-          (item.description && item.description.toLowerCase().includes(q)) ||
-          (item.tags && item.tags.some((tag) => tag.toLowerCase().includes(q)))
+          isAvailable(item) &&
+          (item.name.toLowerCase().includes(q) ||
+            (item.short_name && item.short_name.toLowerCase().includes(q)) ||
+            (item.description && item.description.toLowerCase().includes(q)) ||
+            (item.tags && item.tags.some((tag) => tag.toLowerCase().includes(q))))
       );
     } else if (selectedCategoryId) {
       // Otherwise filter by selected category
@@ -87,13 +102,13 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children, initialMen
         .flatMap((s) => s.categories)
         .find((c) => c.id === selectedCategoryId);
 
-      result = targetCategory ? targetCategory.items.filter((i) => i.is_active !== false) : [];
+      result = targetCategory ? targetCategory.items.filter(isAvailable) : [];
     } else if (selectedSectionId && selectedSectionId !== 'ALL') {
       const targetSection = menu?.sections.find((s) => s.id === selectedSectionId);
       result = targetSection
         ? targetSection.categories
             .filter((c) => c.is_active)
-            .flatMap((c) => c.items.filter((i) => i.is_active !== false))
+            .flatMap((c) => c.items.filter(isAvailable))
         : allItems;
     }
 

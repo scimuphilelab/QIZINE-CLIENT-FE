@@ -21,6 +21,12 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  const isItemAvailable = (item: any) =>
+    item.in_stock !== false &&
+    item.is_in_stock !== false &&
+    item.is_visible !== false &&
+    item.is_active !== false;
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
       {/* Backdrop */}
@@ -64,7 +70,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
                 <div className="bg-stone-50 rounded-2xl p-1.5 space-y-1">
                   {section.categories.map((cat) => {
                     const isSelected = selectedCategoryId === cat.id;
-                    const count = cat.items?.length || 0;
+                    const count = cat.items?.filter(isItemAvailable).length || 0;
                     return (
                       <button
                         key={cat.id}
@@ -97,7 +103,7 @@ export const MenuDrawer: React.FC<MenuDrawerProps> = ({
             <div className="space-y-1">
               {allCategories.map((cat) => {
                 const isSelected = selectedCategoryId === cat.id;
-                const count = cat.items?.length || 0;
+                const count = cat.items?.filter(isItemAvailable).length || 0;
                 return (
                   <button
                     key={cat.id}

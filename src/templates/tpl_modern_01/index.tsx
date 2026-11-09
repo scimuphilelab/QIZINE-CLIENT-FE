@@ -118,7 +118,9 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
           return {
             item_id: i.item_id,
             variant_id: finalVariantId,
+            qty: i.quantity,
             quantity: i.quantity,
+            addon_ids: i.selected_addons.map((a) => a.id),
             customizations: i.selected_addons.map((a) => ({
               group_id: a.group_id,
               option_id: a.id,
