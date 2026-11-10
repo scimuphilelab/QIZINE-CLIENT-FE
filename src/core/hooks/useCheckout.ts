@@ -29,10 +29,11 @@ export function useCheckout(options: UseCheckoutOptions = {}) {
    * Generates a standard NPCI UPI Intent Deep Link URL
    */
   const generateUpiIntentUrl = useCallback(
-    (amountRupees: number, orderRef: string, note?: string): string => {
+    (amountRupees: number, orderRef: string, orderId?: string, note?: string): string => {
       const vpa = options.upiVpa || 'merchant@upi';
       const name = encodeURIComponent(options.merchantName || 'Qizine Vendor');
-      const transactionNote = encodeURIComponent(note || `Order #${orderRef}`);
+      const defaultNote = orderId ? `Token: ${orderRef} | OrderId: ${orderId}` : `Token: ${orderRef}`;
+      const transactionNote = encodeURIComponent((note || defaultNote).slice(0, 60));
       const formattedAmount = amountRupees.toFixed(2);
 
       return `upi://pay?pa=${vpa}&pn=${name}&am=${formattedAmount}&cu=INR&tn=${transactionNote}&tr=${orderRef}`;

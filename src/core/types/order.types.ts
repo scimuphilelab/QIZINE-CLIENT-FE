@@ -15,7 +15,7 @@ export type OrderStatus =
   | 'CANCELLED'
   | 'REJECTED';
 
-export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+export type PaymentStatus = 'PENDING' | 'PAID' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
 export type PaymentMethod = 'UPI_INTENT' | 'CASH' | 'CARD' | 'COUNTER';
 
 export interface SelectedAddon {
@@ -60,6 +60,7 @@ export interface QRBoothContext {
   vendor_name: string;
   serving_model: ServingModel;
   accept_order_type: AcceptOrderType;
+  upi_id?: string | null;
   is_open?: boolean;
   opening_time?: string;
   closing_time?: string;

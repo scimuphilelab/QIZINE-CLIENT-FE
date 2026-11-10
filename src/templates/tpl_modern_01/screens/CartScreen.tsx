@@ -11,6 +11,7 @@ export interface CartScreenProps {
   isOpen?: boolean;
   openingTime?: string;
   closingTime?: string;
+  acceptOrderType?: 'PREPAID' | 'POSTPAID';
   isSubmitting?: boolean;
   errorMessage?: string | null;
   onClearError?: () => void;
@@ -23,6 +24,7 @@ export const CartScreen: React.FC<CartScreenProps> = ({
   tableLocation,
   isOpen = true,
   openingTime,
+  acceptOrderType = 'PREPAID',
   isSubmitting = false,
   errorMessage,
   onClearError,
@@ -249,7 +251,7 @@ export const CartScreen: React.FC<CartScreenProps> = ({
             onClick={onProceedToCheckout}
             type="button"
             disabled={isSubmitting || !isOpen}
-            className={`w-full py-4 px-6 rounded-2xl font-heading font-black text-sm sm:text-base shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`w-full py-4 px-6 rounded-2xl font-heading font-black text-sm sm:text-base shadow-lg transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
               isSubmitting || !isOpen
                 ? 'bg-stone-300 text-stone-500 cursor-not-allowed shadow-none'
                 : 'bg-[#FF5722] hover:bg-[#F4511E] text-white shadow-orange-500/25 active:scale-95'
@@ -258,10 +260,26 @@ export const CartScreen: React.FC<CartScreenProps> = ({
             {isSubmitting ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Sending to Kitchen...</span>
+                <span>Processing Order...</span>
               </div>
+            ) : acceptOrderType === 'PREPAID' ? (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <span>Pay & Place Order • {formatCurrency(calculation.grand_total_paise)}</span>
+                </div>
+                <span className="text-[11px] font-medium opacity-90 tracking-normal">
+                  Instant UPI via GPay / PhonePe / Paytm
+                </span>
+              </>
             ) : (
-              <span>Place Order • {formatCurrency(calculation.grand_total_paise)}</span>
+              <>
+                <div className="flex items-center gap-1.5">
+                  <span>Place Table Order • {formatCurrency(calculation.grand_total_paise)}</span>
+                </div>
+                <span className="text-[11px] font-medium opacity-90 tracking-normal">
+                  Postpaid • Bill provided at your table
+                </span>
+              </>
             )}
           </button>
         </div>

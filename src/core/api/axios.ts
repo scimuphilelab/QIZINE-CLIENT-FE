@@ -33,6 +33,7 @@ export interface ResolveResponseData {
     serving_model?: ServingModel;
     accept_order_type: 'PREPAID' | 'POSTPAID';
     order_confirmation_model: string;
+    upi_id?: string | null;
     currency: string;
     currency_symbol: string;
     is_open: boolean;
@@ -80,6 +81,8 @@ export interface CreateOrderResponseData {
   currency: string;
   booth_label: string;
   serving_model: 'WAITER_SERVING' | 'SELF_SERVING' | 'DELIVERY';
+  accept_order_type?: 'PREPAID' | 'POSTPAID';
+  upi_id?: string | null;
   upi_intent_uri: string;
 }
 

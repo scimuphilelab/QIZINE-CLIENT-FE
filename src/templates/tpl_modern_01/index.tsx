@@ -4,6 +4,7 @@ import { ItemDetailScreen } from './screens/ItemDetailScreen';
 import { CartScreen } from './screens/CartScreen';
 import { OrderConfirmationScreen } from './screens/OrderConfirmationScreen';
 import { OrderTrackerView } from '../../core/components/OrderTrackerView';
+import { UpiPaymentModal } from '../../core/components/UpiPaymentModal';
 import { useMenu } from '../../core/hooks/useMenu';
 import { useCart } from '../../core/hooks/useCart';
 import { QizineApi, type CreateOrderResponseData } from '../../core/api/axios';
@@ -47,6 +48,7 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
 
   const [isSubmittingOrder, setIsSubmittingOrder] = useState<boolean>(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [upiModalOpen, setUpiModalOpen] = useState<boolean>(false);
 
   // Dynamic Cafe Profile
   const cafeName = menu?.cafe_profile?.name || booth?.vendor_name || 'Qizine Restaurant';
@@ -133,8 +135,14 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
       localStorage.setItem('qizine_active_order', JSON.stringify(orderResult));
       setActiveOrder(orderResult);
       clearCart();
-      setCurrentScreen('confirmation');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      const isPrepaid = (booth?.accept_order_type || orderResult.accept_order_type) === 'PREPAID';
+      if (isPrepaid) {
+        setUpiModalOpen(true);
+      } else {
+        setCurrentScreen('confirmation');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } catch (err: any) {
       console.error('[Qizine] Order submission failed:', err);
       const errMsg =
@@ -202,6 +210,7 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
             isOpen={booth?.is_open !== false}
             openingTime={booth?.opening_time}
             closingTime={booth?.closing_time}
+            acceptOrderType={booth?.accept_order_type || 'PREPAID'}
             isSubmitting={isSubmittingOrder}
             errorMessage={checkoutError}
             onClearError={() => setCheckoutError(null)}
@@ -212,6 +221,7 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
         {currentScreen === 'confirmation' && (
           <OrderConfirmationScreen
             orderData={activeOrder}
+            onReopenPayment={() => setUpiModalOpen(true)}
             onViewOrderDetails={() => {
               setCurrentScreen('tracker');
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -222,6 +232,23 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
             }}
           />
         )}
+
+        {/* NPCI UPI Payment Modal (for PREPAID orders) */}
+        <UpiPaymentModal
+          open={upiModalOpen}
+          orderData={activeOrder}
+          upiId={booth?.upi_id}
+          onSuccess={() => {
+            setUpiModalOpen(false);
+            setCurrentScreen('confirmation');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          onClose={() => {
+            setUpiModalOpen(false);
+            setCurrentScreen('confirmation');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
 
         {/* Screen 5: Live Order Tracker Screen */}
         {currentScreen === 'tracker' && (

@@ -149,6 +149,7 @@ export const App: React.FC = () => {
       vendor_name: resolutionData.vendor.name,
       serving_model: resolutionData.booth.serving_model,
       accept_order_type: resolutionData.vendor.accept_order_type,
+      upi_id: resolutionData.vendor.upi_id || null,
       is_open: resolutionData.vendor.is_open,
       opening_time: resolutionData.vendor.opening_time,
       closing_time: resolutionData.vendor.closing_time,
