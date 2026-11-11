@@ -3,6 +3,7 @@ import { Drawer } from 'antd';
 import { ShoppingBag, ArrowRight, Trash2, HeartHandshake, Leaf, Phone, User } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
 import { QizineApi, type CreateOrderResponseData } from '../api/axios';
+import { cleanUserMessage } from '../utils/userMessage';
 import type { QRBoothContext } from '../types/order.types';
 
 export interface CartDrawerProps {
@@ -79,7 +80,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       onClose();
       onOrderCreated(orderResult);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Order dispatch failed');
+      setError(cleanUserMessage(err, 'Unable to place order. Please try again.'));
     } finally {
       setSubmitting(false);
     }

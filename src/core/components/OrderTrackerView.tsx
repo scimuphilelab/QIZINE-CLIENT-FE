@@ -16,6 +16,7 @@ import { QizineApi } from '../api/axios';
 import { useOrderStatus } from '../hooks/useOrderStatus';
 import { useWebPush } from '../hooks/useWebPush';
 import { useCart } from '../hooks/useCart';
+import { cleanUserMessage } from '../utils/userMessage';
 
 export interface OrderTrackerViewProps {
   orderData: CreateOrderResponseData;
@@ -68,7 +69,7 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
   }, [currentStatus]);
 
   const handleCancel = async () => {
-    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    if (!window.confirm('Cancel this order?')) return;
     setCancelling(true);
     setCancelError(null);
     try {
@@ -76,7 +77,7 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
       localStorage.removeItem('qizine_active_order');
       if (onOrderCancelled) onOrderCancelled();
     } catch (err: unknown) {
-      setCancelError(err instanceof Error ? err.message : 'Cancellation failed');
+      setCancelError(cleanUserMessage(err, 'Unable to cancel order.'));
     } finally {
       setCancelling(false);
     }
@@ -179,11 +180,11 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
           <div className="bg-[#FFF4EE] rounded-2xl p-3.5 flex items-center space-x-3 text-xs sm:text-sm text-stone-800 font-medium border border-[#FFD7C5]">
             <Clock className="w-5 h-5 text-[#FF5722] shrink-0 stroke-[2.2]" />
             <p>
-              {currentStatus === 'INITIATED' && 'Order received. Waiting for kitchen confirmation.'}
-              {currentStatus === 'ACCEPTED' && 'Kitchen accepted your order. Preparation starting.'}
-              {currentStatus === 'PREPARING' && 'Chef is currently cooking your fresh items.'}
-              {currentStatus === 'READY' && '🎉 Your order is ready! Please quote your token at the counter.'}
-              {currentStatus === 'SERVED' && 'Enjoy your meal! Order marked served.'}
+              {currentStatus === 'INITIATED' && 'Order placed. Awaiting kitchen.'}
+              {currentStatus === 'ACCEPTED' && 'Order accepted. Preparing soon.'}
+              {currentStatus === 'PREPARING' && 'Cooking your dishes.'}
+              {currentStatus === 'READY' && '🎉 Your order is ready!'}
+              {currentStatus === 'SERVED' && 'Order served. Enjoy your meal!'}
             </p>
           </div>
         </div>
@@ -196,8 +197,8 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
                 <BellRing className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <h4 className="text-xs sm:text-sm font-extrabold text-stone-900 truncate">Get Buzz When Ready</h4>
-                <p className="text-[11px] text-stone-400 truncate">We will send a phone alert when food is cooked</p>
+                <h4 className="text-xs sm:text-sm font-extrabold text-stone-900 truncate">Get Notified When Ready</h4>
+                <p className="text-[11px] text-stone-400 truncate">We'll alert you when food is cooked</p>
               </div>
             </div>
             <button
@@ -218,7 +219,7 @@ export const OrderTrackerView: React.FC<OrderTrackerViewProps> = ({
               className="inline-flex items-center space-x-1.5 text-xs font-bold text-red-500 hover:text-red-700 transition"
             >
               <XCircle className="w-4 h-4 stroke-[2.2]" />
-              <span>{cancelling ? 'Cancelling...' : 'Cancel Order (Self-Service)'}</span>
+              <span>{cancelling ? 'Cancelling...' : 'Cancel Order'}</span>
             </button>
             {cancelError && <p className="text-xs text-red-500 mt-1 font-medium">{cancelError}</p>}
           </div>

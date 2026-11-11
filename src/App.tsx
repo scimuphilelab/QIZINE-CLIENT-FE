@@ -6,6 +6,7 @@ import { resolveTemplate, TEMPLATE_REGISTRY, DEFAULT_TEMPLATE_ID } from './templ
 import { QizineApi, type ResolveResponseData } from './core/api/axios';
 import { ClosedStoreBanner } from './core/components/ClosedStoreBanner';
 import { UniversalErrorPage } from './core/components/UniversalErrorPage';
+import { cleanUserMessage } from './core/utils/userMessage';
 import type { QRBoothContext } from './core/types/order.types';
 import type { MongoMenuDocument } from './core/types/menu.types';
 import {
@@ -54,7 +55,7 @@ export const App: React.FC = () => {
   // Fast-path resolution state
   const [loading, setLoading] = useState<boolean>(Boolean(activeQrKey));
   const [error, setError] = useState<string | null>(
-    activeQrKey ? null : 'Please scan an active table or counter QR code to view the menu.'
+    activeQrKey ? null : 'Please scan a table QR code to view the menu.'
   );
   const [resolutionData, setResolutionData] = useState<ResolveResponseData | null>(null);
 
@@ -78,7 +79,7 @@ export const App: React.FC = () => {
     const trimmed = key.trim();
     if (!trimmed) {
       setResolutionData(null);
-      setError('Please scan an active table or counter QR code to view the menu.');
+      setError('Please scan a table QR code to view the menu.');
       setLoading(false);
       return;
     }
@@ -104,7 +105,7 @@ export const App: React.FC = () => {
       })
       .catch((err) => {
         setResolutionData(null);
-        setError(err instanceof Error ? err.message : 'Invalid or inactive QR code.');
+        setError(cleanUserMessage(err, 'Menu not found. Please scan QR again.'));
       })
       .finally(() => {
         setLoading(false);

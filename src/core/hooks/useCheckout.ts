@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useCartContext } from '../context/CartContext';
 import type { CreateOrderPayload, OrderResponse, QRBoothContext } from '../types/order.types';
 import { QizineApi } from '../api/axios';
+import { cleanUserMessage } from '../utils/userMessage';
 
 export interface UseCheckoutOptions {
   apiBaseUrl?: string;
@@ -96,9 +97,9 @@ export function useCheckout(options: UseCheckoutOptions = {}) {
         clearCart();
         return responseData;
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Failed to place order';
+        const message = cleanUserMessage(err, 'Unable to place order. Please try again.');
         setError(message);
-        throw err;
+        throw new Error(message);
       } finally {
         setSubmitting(false);
       }

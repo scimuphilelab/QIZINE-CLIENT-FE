@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag, Store, MapPin, AlertCircle } from 'lucide-react';
 import { useCart } from '../../../core/hooks/useCart';
 import { DishThumbnail } from '../components/DishThumbnail';
+import { cleanUserMessage } from '../../../core/utils/userMessage';
 
 export interface CartScreenProps {
   onBack: () => void;
@@ -55,12 +56,12 @@ export const CartScreen: React.FC<CartScreenProps> = ({
           </span>
         </header>
 
-        {/* Backend Error Banner */}
+        {/* Error Banner */}
         {errorMessage && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-xs sm:text-sm font-semibold flex items-center justify-between gap-2 mb-4 animate-in fade-in duration-200">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-between gap-2 mb-4 animate-in fade-in duration-200">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-              <span>{errorMessage}</span>
+              <span>{cleanUserMessage(errorMessage, 'Unable to place order. Please try again.')}</span>
             </div>
             {onClearError && (
               <button
@@ -76,14 +77,13 @@ export const CartScreen: React.FC<CartScreenProps> = ({
 
         {/* Closed Store Warning Notice */}
         {!isOpen && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-3.5 mb-4 flex items-start gap-3 text-xs sm:text-sm font-medium">
-            <span className="text-lg">⛔</span>
+          <div className="bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-3 mb-4 flex items-center gap-2.5 text-xs font-medium">
+            <span className="text-base">⛔</span>
             <div>
-              <p className="font-black text-amber-950">Restaurant is Currently Closed</p>
-              <p className="text-amber-800/90 text-[11px] sm:text-xs mt-0.5">
-                Ordering is currently unavailable.{' '}
+              <p className="font-bold text-amber-950">Restaurant is currently closed</p>
+              <p className="text-amber-800/90 text-[11px] mt-0.5">
                 {openingTime
-                  ? `Ordering will resume at ${openingTime}.`
+                  ? `Ordering resumes at ${openingTime}.`
                   : 'Please check back during open hours.'}
               </p>
             </div>
@@ -107,9 +107,6 @@ export const CartScreen: React.FC<CartScreenProps> = ({
                 )}
               </div>
             </div>
-            <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-              Table Order
-            </span>
           </div>
         )}
 

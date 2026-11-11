@@ -11,6 +11,7 @@ import { QizineApi, type CreateOrderResponseData } from '../../core/api/axios';
 import type { MenuItem } from '../../core/types/menu.types';
 import type { SelectedAddon } from '../../core/types/order.types';
 import type { TemplateProps } from '../registry';
+import { cleanUserMessage } from '../../core/utils/userMessage';
 
 export type ScreenState =
   | 'home'
@@ -145,12 +146,7 @@ export const Modern01Template: React.FC<TemplateProps> = ({ booth }) => {
       }
     } catch (err: any) {
       console.error('[Qizine] Order submission failed:', err);
-      const errMsg =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message ||
-        'Unable to send order to the kitchen. Please check connection and try again.';
-      setCheckoutError(errMsg);
+      setCheckoutError(cleanUserMessage(err, 'Unable to place order. Please try again.'));
     } finally {
       setIsSubmittingOrder(false);
     }

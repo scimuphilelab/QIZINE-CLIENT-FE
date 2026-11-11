@@ -3,6 +3,7 @@ import { ENV, API_ENDPOINTS } from '../../config/env';
 import type { MongoMenuDocument } from '../types/menu.types';
 import type { QRBoothContext, OrderStatus, PaymentStatus, ServingModel } from '../types/order.types';
 import { normalizeResolveData } from '../utils/menuNormalizer';
+import { cleanUserMessage } from '../utils/userMessage';
 
 /**
  * Standard API Response envelope
@@ -113,15 +114,16 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError<{ success?: boolean; message?: string; error?: string }>) => {
-    let errorMessage = 'Network error or service unavailable.';
+    let rawError = 'Unable to connect. Please try again.';
     if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
+      rawError = error.response.data.message;
     } else if (error.response?.data?.error) {
-      errorMessage = error.response.data.error;
+      rawError = error.response.data.error;
     } else if (error.message) {
-      errorMessage = error.message;
+      rawError = error.message;
     }
-    return Promise.reject(new Error(errorMessage));
+    const cleanMsg = cleanUserMessage(rawError, 'Unable to connect. Please try again.');
+    return Promise.reject(new Error(cleanMsg));
   }
 );
 
@@ -135,7 +137,7 @@ export const QizineApi = {
   async resolveMenu(qrKey: string): Promise<ResolveResponseData> {
     const cleanedKey = qrKey.trim();
     if (!cleanedKey) {
-      throw new Error('Please provide a valid QR booth code.');
+      throw new Error('Please scan a valid table QR code.');
     }
 
     try {
@@ -150,13 +152,12 @@ export const QizineApi = {
         return normalizeResolveData(response.data.data);
       }
 
-      throw new Error(response.data?.message || 'Invalid or inactive QR code.');
+      throw new Error(cleanUserMessage(response.data?.message, 'Menu not found. Please scan QR again.'));
     } catch (err: any) {
-      // Propagate the exact message from backend
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        'Unable to resolve QR code. Booth or digital menu not found.';
+      const message = cleanUserMessage(
+        err.response?.data?.message || err.message,
+        'Menu not found. Please scan QR again.'
+      );
       throw new Error(message);
     }
   },
@@ -197,13 +198,12 @@ export const QizineApi = {
       if (response.data?.data) {
         return response.data.data;
       }
-      throw new Error(response.data?.message || 'Unexpected order response format');
+      throw new Error(cleanUserMessage(response.data?.message, 'Unable to place order. Please try again.'));
     } catch (err: any) {
-      const message =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        err.message ||
-        'Unable to process your order with the kitchen. Please try again.';
+      const message = cleanUserMessage(
+        err.response?.data?.message || err.response?.data?.error || err.message,
+        'Unable to place order. Please try again.'
+      );
       throw new Error(message);
     }
   },

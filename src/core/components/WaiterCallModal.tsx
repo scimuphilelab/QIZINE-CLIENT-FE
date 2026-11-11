@@ -36,11 +36,11 @@ export const WaiterCallModal: React.FC<WaiterCallModalProps> = ({
         type: selectedType,
         custom_note: customNote.trim() || undefined,
       });
-      message.success('Staff notified! Someone will assist you shortly at your table.');
+      message.success('Staff notified!');
       setCustomNote('');
       onClose();
     } catch {
-      message.error('Could not reach staff. Please wave down a floor associate.');
+      message.error('Please ask staff directly.');
     } finally {
       setLoading(false);
     }

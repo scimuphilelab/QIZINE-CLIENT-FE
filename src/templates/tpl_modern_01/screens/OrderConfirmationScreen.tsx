@@ -58,96 +58,71 @@ export const OrderConfirmationScreen: React.FC<OrderConfirmationScreenProps> = (
       <div>
         {/* Dynamic Header State */}
         {isPrepaid && isInitiated ? (
-          /* PREPAID: Waiting for Manager Payment Verification */
-          <div className="flex flex-col items-center justify-center text-center mt-4 mb-6">
-            <div className="relative w-20 h-20 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-xl shadow-amber-500/25 mb-4 animate-in zoom-in duration-300">
-              <Clock className="w-10 h-10 stroke-[2.5] animate-pulse" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-[10px]">
-                ₹
-              </span>
+          /* PREPAID: Waiting for Payment Verification */
+          <div className="flex flex-col items-center justify-center text-center mt-4 mb-5">
+            <div className="relative w-16 h-16 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/20 mb-3 animate-in zoom-in duration-300">
+              <Clock className="w-8 h-8 stroke-[2.5] animate-pulse" />
             </div>
 
-            <span className="text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-200 mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 mb-2">
               Payment Under Verification
             </span>
 
-            <h1 className="font-heading font-black text-2xl sm:text-3xl text-stone-900 tracking-tight">
-              Order Initiated!
+            <h1 className="font-heading font-black text-2xl text-stone-900 tracking-tight">
+              Order Placed!
             </h1>
-            <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-[300px]">
-              The restaurant manager is verifying your UPI payment. Once confirmed, your order will move directly to the kitchen.
+            <p className="text-xs text-stone-500 mt-1 max-w-[280px]">
+              Waiting for payment confirmation from staff.
             </p>
+
+            {onReopenPayment && (
+              <button
+                onClick={onReopenPayment}
+                type="button"
+                className="mt-3 text-xs font-bold text-[#FF5722] hover:underline flex items-center gap-1.5 cursor-pointer bg-orange-50 px-3 py-1.5 rounded-full border border-orange-200"
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                <span>Re-open Payment QR</span>
+              </button>
+            )}
           </div>
         ) : isConfirmed ? (
           /* CONFIRMED: Order Accepted by Kitchen */
-          <div className="flex flex-col items-center justify-center text-center mt-4 mb-6">
-            <div className="w-20 h-20 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-xl shadow-emerald-500/25 mb-4 animate-in zoom-in duration-300">
-              <Check className="w-10 h-10 stroke-[3]" />
+          <div className="flex flex-col items-center justify-center text-center mt-4 mb-5">
+            <div className="w-16 h-16 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-3 animate-in zoom-in duration-300">
+              <Check className="w-8 h-8 stroke-[3]" />
             </div>
 
-            <span className="text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200 mb-2">
-              Order Confirmed
+            <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200 mb-2">
+              Confirmed
             </span>
 
-            <h1 className="font-heading font-black text-2xl sm:text-3xl text-stone-900 tracking-tight">
-              Cooking in Progress!
+            <h1 className="font-heading font-black text-2xl text-stone-900 tracking-tight">
+              Preparing Your Food!
             </h1>
-            <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-[280px]">
-              Our chefs have received your order and started preparing your dishes freshly.
+            <p className="text-xs text-stone-500 mt-1 max-w-[280px]">
+              The kitchen is preparing your dishes.
             </p>
           </div>
         ) : (
-          /* POSTPAID or General: Order Placed */
-          <div className="flex flex-col items-center justify-center text-center mt-4 mb-6">
-            <div className="w-20 h-20 rounded-full bg-[#FF5722] text-white flex items-center justify-center shadow-xl shadow-orange-500/30 mb-4 animate-in zoom-in duration-300">
-              <Check className="w-10 h-10 stroke-[3]" />
+          /* POSTPAID: Order Placed */
+          <div className="flex flex-col items-center justify-center text-center mt-4 mb-5">
+            <div className="w-16 h-16 rounded-full bg-[#FF5722] text-white flex items-center justify-center shadow-lg shadow-orange-500/20 mb-3 animate-in zoom-in duration-300">
+              <Check className="w-8 h-8 stroke-[3]" />
             </div>
 
-            <span className="text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full bg-[#FFF4EE] text-[#FF5722] border border-[#FFD7C5] mb-2">
-              Postpaid • Pay on Bill
+            <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-0.5 rounded-full bg-[#FFF4EE] text-[#FF5722] border border-[#FFD7C5] mb-2">
+              Pay at Table
             </span>
 
-            <h1 className="font-heading font-black text-2xl sm:text-3xl text-stone-900 tracking-tight">
+            <h1 className="font-heading font-black text-2xl text-stone-900 tracking-tight">
               Order Sent to Kitchen!
             </h1>
-            <p className="text-xs sm:text-sm text-stone-500 mt-1 max-w-[300px]">
-              Your table order has been dispatched. A printed thermal bill with a dynamic UPI payment QR will be brought to your table.
+            <p className="text-xs text-stone-500 mt-1 max-w-[280px]">
+              Enjoy your food! You can pay at your table after dining.
             </p>
           </div>
         )}
-
-        {/* Informative Guidance Banner */}
-        {isPrepaid && isInitiated ? (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 mb-5 flex items-start gap-3 text-xs text-amber-900">
-            <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-amber-950">Manager Approval in Progress</p>
-              <p className="text-[11px] text-amber-800/90 mt-0.5">
-                We are listening for confirmation from the counter. This page will update automatically once accepted.
-              </p>
-              {onReopenPayment && (
-                <button
-                  onClick={onReopenPayment}
-                  type="button"
-                  className="mt-2 text-[11px] font-black text-[#FF5722] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <QrCode className="w-3 h-3" />
-                  <span>Re-open UPI Payment QR</span>
-                </button>
-              )}
-            </div>
-          </div>
-        ) : !isPrepaid ? (
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3.5 mb-5 flex items-start gap-3 text-xs text-blue-900">
-            <Receipt className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-blue-950">No Upfront Payment Required</p>
-              <p className="text-[11px] text-blue-800/90 mt-0.5">
-                Enjoy your freshly prepared food! The server will hand you your itemized bill with an instant UPI QR code at your table.
-              </p>
-            </div>
-          </div>
-        ) : null}
 
         {/* Order Details Receipt Box */}
         <div className="bg-white rounded-3xl p-5 border border-stone-200/70 shadow-2xs space-y-3 mb-6">

@@ -173,9 +173,9 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
     >
       <div className="bg-[#FAF9F7] text-stone-900 p-5 sm:p-6 rounded-3xl text-center space-y-3.5 font-sans selection:bg-[#FF5722]/20 selection:text-[#FF5722]">
         {/* Header Badge */}
-        <div className="flex items-center justify-center space-x-1.5 text-[11px] font-black text-[#FF5722] bg-[#FFF4EE] border border-[#FFD7C5] py-1 px-3.5 rounded-full mx-auto w-fit uppercase tracking-wider">
+        <div className="flex items-center justify-center space-x-1.5 text-[11px] font-bold text-[#FF5722] bg-[#FFF4EE] border border-[#FFD7C5] py-1 px-3.5 rounded-full mx-auto w-fit uppercase tracking-wider">
           <ShieldCheck className="w-3.5 h-3.5" />
-          <span>NPCI Instant UPI Payment</span>
+          <span>Pay via UPI</span>
         </div>
 
         {/* Amount & Order details */}
@@ -335,7 +335,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
             {isVerifying ? (
               <>
                 <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#FF5722]" />
-                <span>Submitting payment confirmation...</span>
+                <span>Verifying...</span>
               </>
             ) : (
               <>
@@ -346,7 +346,7 @@ export const UpiPaymentModal: React.FC<UpiPaymentModalProps> = ({
             )}
           </button>
           <p className="text-[10px] text-stone-400 mt-2 font-normal">
-            Your order will be verified by the restaurant manager before food preparation begins.
+            Order will be confirmed once payment is received.
           </p>
         </div>
       </div>

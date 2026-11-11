@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertCircle, QrCode, ArrowRight, RefreshCw, Sparkles, Store } from 'lucide-react';
+import { cleanUserMessage } from '../utils/userMessage';
 
 export interface UniversalErrorPageProps {
   message: string;
@@ -55,7 +56,7 @@ export const UniversalErrorPage: React.FC<UniversalErrorPageProps> = ({
               Unable to Open Menu
             </h1>
             <p className="text-xs sm:text-sm text-stone-500 leading-relaxed max-w-sm mx-auto font-medium">
-              {message}
+              {cleanUserMessage(message, 'Please check your connection or scan the table QR code again.')}
             </p>
 
             {currentKey && (
